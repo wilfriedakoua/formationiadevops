@@ -104,9 +104,10 @@
 
   /* ---------- Highlight current module in top bar ---------- */
   function highlightCurrent() {
-    var path = location.pathname.split('/').pop() || 'index.html';
+    var path = (location.pathname.split('/').pop() || 'index.html').replace(/\.html$/, '');
     document.querySelectorAll('.topbar a[href]').forEach(function (a) {
-      if (a.getAttribute('href') === path) a.classList.add('active');
+      var href = a.getAttribute('href').replace(/\.html$/, '');
+      if (href === path) a.classList.add('active');
     });
   }
 
@@ -161,8 +162,12 @@
     var links = Array.prototype.slice.call(document.querySelectorAll('.topbar a[href]'))
       .map(function (a) { return a.getAttribute('href'); })
       .filter(function (h) { return /\.html$/.test(h); });
-    var path = location.pathname.split('/').pop() || 'index.html';
-    var idx = links.indexOf(path);
+    var path = location.pathname.split('/').pop().replace(/\.html$/, '') || 'index';
+    var idx = -1;
+    links.forEach(function (h, i) {
+      var name = h.split('/').pop().replace(/\.html$/, '');
+      if (name === path) idx = i;
+    });
     if (idx === -1) return;
     var target = links[idx + dir];
     if (target) {
