@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M4 · Les bases du prompting — Formation IA &amp; DevOps</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">IA &amp; DevOps · 1 jour</a>
+  <a href="01-introduction-ia.html">M1</a><a href="02-fondamentaux-devops.html">M2</a><a href="03-ia-dans-le-devops.html">M3</a><a href="04-bases-du-prompting.html">M4</a><a href="05-cas-usages-cycle-devops.html">M5</a><a href="06-monitoring-incidentologie.html">M6</a><a href="07-outils-ethique-tendances.html">M7</a><a href="ateliers.html">Ateliers</a><a href="quiz-final.html">Quiz</a>
+  <span class="spacer"></span>
+  <button data-action="notes">Notes (N)</button>
+  <button data-action="present">Présenter (P)</button>
+</header>
+
+<div class="hero"><div class="inner">
+  <div class="kicker">Module 4 · 11:30 – 12:30 · 40 min + atelier 20 min</div>
+  <h1>Les bases du prompting</h1>
+  <p>Passer de « demander à un chatbot » à « piloter un assistant » : structurer, contraindre, décomposer, itérer — et capitaliser ses prompts comme du code.</p>
+</div></div>
+
+<main>
+
+<section class="slide">
+  <div class="objectives">
+    <h3>🎯 Objectifs du module</h3>
+    <ul>
+      <li>Structurer un prompt avec les <strong>5 composants</strong> : Rôle, Contexte, Contraintes, Format, Auto‑revue.</li>
+      <li>Utiliser les techniques clés : exemples, décomposition, questions préalables, itération.</li>
+      <li>Appliquer l'<strong>hygiène de contexte</strong> (et ne pas fuiter de secrets).</li>
+      <li>Capitaliser au niveau de l'équipe : <code>AGENTS.md</code>, rules, bibliothèque de prompts.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">1</span>Pourquoi un prompt DevOps n'est pas un prompt de chatbot</h2>
+  <p>Sans contraintes, le modèle choisit la réponse <strong>la plus fréquente</strong> dans ses données d'entraînement — rarement la plus sûre pour la production.</p>
+  <div class="grid two">
+    <div>
+      <div class="prompt-box bad">Crée-moi un bucket S3 avec Terraform.</div>
+      <p>➡️ Résultat typique : région par défaut, pas de chiffrement explicite, pas de versioning, pas de blocage d'accès public, parfois une syntaxe de provider ancienne.</p>
+    </div>
+    <div>
+      <div class="prompt-box good">Tu es ingénieur plateforme AWS.
+Contexte : projet BookShelf, Terraform >= 1.6, provider AWS v5, région eu-west-3.
+Crée un bucket S3 pour les artefacts de build.
+Contraintes : versioning activé, chiffrement SSE-KMS, accès public bloqué, tags app=bookshelf et env=dev, ressources séparées (pas de blocs inline dépréciés).
+Format : un seul fichier main.tf, commentaires en français.
+À la fin, liste les hypothèses que tu as faites et 2 points à vérifier.</div>
+    </div>
+  </div>
+  <div class="callout key"><span class="t">Règle</span>Chaque information absente du prompt est une <strong>hypothèse implicite</strong> que le modèle fera à votre place.</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">2</span>L'anatomie d'un prompt structuré : R‑C‑C‑F‑A</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Composant</th><th>Question</th><th>Exemple BookShelf</th></tr>
+    <tr><td><strong>R</strong> · Rôle</td><td>Quel point de vue / quelle expertise ?</td><td>« Tu es SRE senior spécialisé Kubernetes et sécurité. »</td></tr>
+    <tr><td><strong>C</strong> · Contexte</td><td>Quel projet, quelle stack, quelles versions, quel existant ?</td><td>« Service <code>catalog-api</code>, FastAPI, port 8000, santé sur <code>/health</code>, Kubernetes 1.30, namespace <code>bookshelf</code>. »</td></tr>
+    <tr><td><strong>C</strong> · Contraintes</td><td>Qu'est‑ce qui n'est pas négociable ?</td><td>« Probes, requests/limits, non‑root, image taguée (pas <code>latest</code>), aucun secret en clair. »</td></tr>
+    <tr><td><strong>F</strong> · Format</td><td>Quelle forme de sortie ?</td><td>« Un seul fichier YAML <code>k8s/deployment.yaml</code>, sans explication autour. »</td></tr>
+    <tr><td><strong>A</strong> · Auto‑revue</td><td>Quel contrôle l'assistant fait‑il sur sa propre réponse ?</td><td>« Termine par la liste des hypothèses et des points à durcir. »</td></tr>
+  </table></div>
+  <h3>Gabarit réutilisable</h3>
+  <pre><code><span class="k">RÔLE</span> : Tu es [expertise] qui [objectif].
+<span class="k">CONTEXTE</span> : [projet, stack, versions, environnement, existant pertinent]
+<span class="k">TÂCHE</span> : [ce que tu dois produire, en une phrase]
+<span class="k">CONTRAINTES</span> :
+- [règle non négociable 1]
+- [règle non négociable 2]
+<span class="k">FORMAT</span> : [type de fichier, structure, langue, longueur]
+<span class="k">AUTO-REVUE</span> : Avant de répondre, vérifie [critères].
+           Termine par : hypothèses prises, risques, tests à lancer.</code></pre>
+  <div class="callout src">D'autres équipes utilisent des acronymes comme CO‑STAR, RACE ou CRISPE. L'acronyme importe peu : ce qui compte, c'est la discipline <strong>contexte + contraintes + format + auto‑revue</strong>.</div>
+</section>
+
+
+<section class="slide">
+  <h2><span class="num">3</span>Hygiène de contexte</h2>
+  <p>Plus de contexte ne veut pas dire meilleure réponse. Le bon contexte est <strong>pertinent, à jour, concis</strong>.</p>
+  <div class="grid two">
+    <div class="card"><h4>✅ À faire</h4><ul>
+      <li>Ne fournir que les fichiers et extraits utiles.</li>
+      <li>Consignes critiques en <strong>tête</strong>, rappel du format en <strong>fin</strong>.</li>
+      <li>Préciser les <strong>versions</strong> (K8s, Terraform, provider, langage).</li>
+      <li>Une conversation = un sujet ; repartir à zéro quand on change de sujet.</li>
+      <li>Fournir la doc à jour quand la techno est récente.</li>
+    </ul></div>
+    <div class="card"><h4>🚫 À éviter</h4><ul>
+      <li>Coller des <strong>secrets</strong>, tokens, mots de passe, kubeconfig.</li>
+      <li>Coller des données personnelles (IP, e‑mails, noms) sans anonymisation.</li>
+      <li>Joindre tout le dépôt « au cas où ».</li>
+      <li>Laisser de la doc obsolète ou contradictoire dans le contexte.</li>
+      <li>Des conversations de 200 messages qui dérivent.</li>
+    </ul></div>
+  </div>
+  <div class="callout danger"><span class="t">🔐 Réflexe sécurité</span>Avant de coller un log ou une config : <em>« Est‑ce que je l'enverrais par e‑mail à un prestataire externe ? »</em> Si non, anonymisez ou utilisez un outil maîtrisé. Pensez aux outils de détection de secrets (Gitleaks) avant tout envoi.</div>
+</section>
+
+
+
+<section class="slide">
+  <h2><span class="num">4</span>Les briques du contexte d'équipe</h2>
+  <p>Pour briefer l'IA sur un projet, six briques à connaître. Elles vivent dans le dépôt Git : versionnées, relues en PR, partagées par toute l'équipe.</p>
+  <div class="grid two">
+    <div class="card"><h4>📜 Rules</h4><p>Consignes permanentes, lues à chaque session — le règlement intérieur du projet. <em>« Jamais de secret en clair. Toujours des requests/limits. »</em></p></div>
+    <div class="card"><h4>🎓 Skills</h4><p>Savoir-faire réutilisable (SKILL.md), chargé seulement quand la tâche correspond. <em>« Générer un manifest K8s durci. »</em></p></div>
+    <div class="card"><h4>⌨️ Commands</h4><p>Prompts enregistrés, déclenchés à la demande : <code>/review</code>, <code>/test</code>, <code>/deploy</code>.</p></div>
+    <div class="card"><h4>🪝 Hooks</h4><p>Actions automatiques déterministes (formatter, bloquer un commit) — l'IA ne peut pas les ignorer.</p></div>
+    <div class="card"><h4>🤖 Agents</h4><p>Sous-assistants spécialisés à droits limités (reviewer sécurité en lecture seule…).</p></div>
+    <div class="card"><h4>🔌 MCP</h4><p>Connexion aux outils externes : Git, cluster, monitoring. Détails et sécurité en M7.</p></div>
+  </div>
+  <div class="callout key"><span class="t">Où placer le contrôle ?</span>Vrai <strong>en permanence</strong> → rule · doit être <strong>garanti</strong> → hook, CI ou permissions · lancé <strong>par vous</strong> → command · procédure que l'IA doit <strong>reconnaître seule</strong> → skill. Commencer par les rules ; ajouter le reste quand un besoin concret apparaît.</div>
+</section><section class="slide">
+  <h2><span class="num">5</span>Comment configurer son repo pour l'IA</h2>
+  <p>Ces fichiers ne changent rien au fonctionnement du code : ils <strong>briefer l'IA</strong> quand elle travaille sur le projet — et documentent au passage les conventions pour les humains. À la racine du dépôt, on trouve typiquement :</p>
+  <pre><code>mon-projet/
+├── AGENTS.md              <span class="c"># règles : lues à chaque session</span>
+├── opencode.json          <span class="c"># config OpenCode (MCP, permissions...)</span>
+├── .mcp.json              <span class="c"># connexions aux outils externes</span>
+├── .opencode/             <span class="c"># OpenCode (chaque outil a son équivalent)</span>
+│   ├── hooks/             <span class="c"># plugins (actions automatiques)</span>
+│   ├── commands/          <span class="c"># review.md, test.md, deploy.md</span>
+│   └── skills/
+│       ├── terraform-review/   <span class="c"># SKILL.md + scripts/</span>
+│       └── security-audit/     <span class="c"># SKILL.md + scripts/</span>
+├── agents/
+│   ├── security-reviewer.md    <span class="c"># sous-agent lecture seule</span>
+│   └── devops-expert.md
+├── scripts/               <span class="c"># deploy.sh, security-check.sh</span>
+├── src/ · tests/ · terraform/
+└── .gitlab-ci.yml         <span class="c"># les gates, indépendants de l'IA</span></code></pre>
+  <div class="callout warn"><span class="t">⚠️ Proposition d'organisation</span>Chaque outil IA a ses propres conventions : Claude Code reconnaît nativement <code>.claude/commands/</code> et <code>.claude/skills/</code>, d'autres outils nécessitent une configuration différente. Le <strong>contenu</strong> reste portable, seuls les emplacements changent.</div>
+  </section>
+
+<section class="slide">
+  <h2><span class="num">6</span>Exemple : une rule</h2>
+  <div class="grid two">
+    <div>
+      <h3><code>AGENTS.md</code> (à la racine du dépôt)</h3>
+      <pre><code><span class="c"># Project Rules</span>
+
+<span class="k">## Stack</span>
+- Python 3.12 / FastAPI, Java 21 / Spring Boot, PostgreSQL 16
+- Kubernetes 1.30, Argo CD, Terraform >= 1.6 (provider AWS v5)
+
+<span class="k">## Règles non négociables</span>
+- Aucun secret en clair : utiliser des Secrets K8s / un secret manager.
+- Images taguées par SHA ou version, jamais `latest`.
+- Tout Deployment a : readiness/liveness probes, requests/limits, runAsNonRoot.
+- Scripts Bash : `set -euo pipefail`.
+
+<span class="k">## Commandes de vérification</span>
+- `kubectl apply --dry-run=server -f k8s/`
+- `terraform fmt -check && terraform validate`
+- `pytest -q` ; `gitleaks detect` ; `trivy config .`
+
+<span class="k">## Ce que l'assistant ne doit jamais faire</span>
+- Exécuter une commande d'écriture sur un cluster de production.
+- Modifier la CI pour désactiver un scan.</code></pre>
+    </div>
+    <div>
+      <h3>Même contenu, quel que soit votre assistant</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Outil</th><th>Emplacement</th></tr>
+        <tr><td>Standard ouvert (tous)</td><td><code>AGENTS.md</code></td></tr>
+        <tr><td>OpenCode</td><td><code>AGENTS.md</code>, <code>opencode.json</code></td></tr>
+        <tr><td>Cursor</td><td><code>.cursor/rules/*.mdc</code></td></tr>
+        <tr><td>GitHub Copilot</td><td><code>.github/copilot-instructions.md</code></td></tr>
+        <tr><td>Gemini CLI</td><td><code>GEMINI.md</code></td></tr>
+      </table></div>
+      <div class="callout tip"><span class="t">💡 Comment ça marche</span>Quand l'assistant ouvre le dépôt, il lit ces règles et les applique. Demandez <em>« Crée-moi un Dockerfile pour mon application Python »</em> : il sait déjà — Python 3.12, conventions du projet, pas de secrets, moindre privilège. <strong>Vous n'avez pas à répéter ces consignes dans chaque prompt.</strong></div>
+    </div>
+  </div>
+  <div class="callout key"><span class="t">Rule</span>Consignes générales, <strong>toujours appliquées</strong> — contrairement au skill (chargé quand la tâche le nécessite) et à la command (déclenchée explicitement).</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">7</span>Exemple : un skill et une command</h2>
+  <div class="grid two">
+    <div>
+      <h3>Un skill — <code>skills/terraform-review/SKILL.md</code></h3>
+      <pre><code><span class="k">---</span>
+name: terraform-review
+description: Analyse la sécurité du code
+Terraform et identifie les mauvaises
+configurations.
+<span class="k">---</span>
+
+# Terraform Security Review
+
+## Procédure
+1. Identifier les fichiers .tf.
+2. Vérifier les configurations IAM.
+3. Identifier les ressources exposées
+   publiquement.
+4. Vérifier le chiffrement des données.
+5. Rechercher les secrets en dur.
+6. Exécuter terraform validate.
+7. Exécuter Checkov si disponible.
+
+## Résultat attendu
+Vulnérabilité · fichier et ligne ·
+criticité · recommandation de correction.</code></pre>
+      <p><small>Format <strong>Agent Skills</strong> (ouvert) : la <strong>description</strong> est l'élément clé, c'est elle qui fait charger le skill au bon moment. On y joint scripts, templates de rapports, exemples conformes.</p></small>
+    </div>
+    <div>
+      <h3>Une command — <code>commands/review.md</code></h3>
+      <pre><code>Relis le diff de la branche courante selon
+AGENTS.md : sécurité, conventions, tests,
+secrets. Pour chaque problème : fichier,
+ligne, gravité, correction proposée.
+Ne modifie aucun fichier.</code></pre>
+      <p><small>Un prompt enregistré que <strong>vous</strong> déclenchez (<code>/review</code>). Chaque outil a son dossier (<code>commands/</code>, <code>.claude/commands/</code>, <code>.cursor/commands/</code>…) — le contenu reste portable.</p></small>
+      <div class="table-wrap"><table>
+        <tr><th>Commande</th><th>Fonction</th></tr>
+        <tr><td><code>/review</code></td><td>Réaliser une code review</td></tr>
+        <tr><td><code>/test</code></td><td>Générer et exécuter des tests</td></tr>
+        <tr><td><code>/deploy</code></td><td>Préparer un déploiement</td></tr>
+        <tr><td><code>/audit</code></td><td>Auditer la sécurité</td></tr>
+      </table></div>
+    </div>
+  </div>
+  <div class="callout key"><span class="t">Skill</span>Procédure <strong>chargée quand la tâche le nécessite</strong> — la description du <code>SKILL.md</code> fait le tri. Demandez <em>« Fais un audit de sécurité de mon infrastructure Terraform »</em> : l'assistant reconnaît la description, charge le skill et suit la procédure.</div>
+  <div class="callout key"><span class="t">Command</span>Prompt enregistré, <strong>déclenché explicitement</strong> par vous (<code>/review</code>) — contrairement à la rule (toujours appliquée) et au skill (reconnu seul).</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">8</span>Exemple : un hook</h2>
+  <div class="grid two">
+    <div>
+      <h3>Hook Git — <code>.pre-commit-config.yaml</code></h3>
+      <pre><code>repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format</code></pre>
+      <pre><code>pip install pre-commit
+pre-commit install</code></pre>
+      <p><small>À chaque commit (humain ou généré par IA, quel que soit l'outil), les contrôles configurés s'exécutent automatiquement.</small></p>
+    </div>
+    <div>
+      <h3>Hook d'assistant — OpenCode (plugins)</h3>
+      <pre><code>{ "hooks": { "PostToolUse": [{
+  "matcher": "Edit|Write",
+  "command": "npm run lint --fix &amp;&amp;
+              npx gitleaks detect --redact"
+}]}}</code></pre>
+      <p><small>OpenCode n'a pas de hooks natifs : on passe par son <strong>système de plugins</strong> pour déclencher des actions automatiques (formater après une modification, contrôle de sécurité après génération de code…). Exemples de déclencheurs utiles : avant un commit, avant un déploiement.</small></p>
+    </div>
+  </div>
+  <div class="callout key"><span class="t">Pourquoi c'est la brique la plus importante</span>Un hook est <strong>déterministe</strong> : il s'exécute quoi qu'il arrive, l'IA ne peut pas l'ignorer — contrairement à une rule, qui n'est qu'une consigne. ⚠️ Un hook Git local peut être contourné (<code>--no-verify</code>) : pour une véritable garantie, imposez aussi les contrôles dans la CI/CD et protégez les branches.</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">9</span>Exemple : des agents spécialisés</h2>
+  <p><strong>Objectif :</strong> déléguer des tâches à plusieurs assistants aux rôles différents, puis consolider.</p>
+  <div class="grid two">
+    <div>
+      <h3><code>agents/security-reviewer.md</code></h3>
+      <pre><code><span class="k"># Security Reviewer</span>
+
+## Rôle
+Tu es un expert en cybersécurité.
+
+## Missions
+- Analyser les vulnérabilités.
+- Identifier les secrets exposés.
+- Vérifier les permissions IAM.
+- Analyser les Dockerfiles.
+
+## Restrictions
+- Lecture seule.
+- Ne jamais modifier les fichiers.
+- Ne jamais déployer.</code></pre>
+    </div>
+    <div>
+      <h3><code>agents/devops-expert.md</code></h3>
+      <pre><code><span class="k"># DevOps Expert</span>
+
+## Rôle
+Tu es un expert DevOps.
+
+## Missions
+- Analyser les pipelines CI/CD.
+- Optimiser les Dockerfiles.
+- Vérifier les manifests Kubernetes.
+- Proposer des améliorations Terraform.
+
+## Restrictions
+- Ne jamais déployer en production
+  sans autorisation.</code></pre>
+    </div>
+  </div>
+  <div class="callout tip"><span class="t">💡 Utilisation</span><em>« Analyse mon projet avant sa mise en production : demande à l'agent DevOps de vérifier les pipelines et à l'agent Security de réaliser un audit. »</em> L'assistant principal délègue aux agents spécialisés, puis consolide les résultats.</div>
+  <div class="callout warn"><span class="t">⚠️ Limites</span>Un fichier Markdown décrivant un agent ne suffit pas à l'activer : il faut le déclarer selon le mécanisme de sous-agents de l'outil utilisé (par ex. <code>.claude/agents/</code> avec ses métadonnées). Toujours des restrictions explicites : lecture seule, pas de déploiement.</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">10</span>Exemple : connecter l'IA aux outils externes (MCP)</h2>
+  <p>Par défaut, l'assistant ne connaît que les fichiers du dépôt. Le <strong>MCP</strong> le connecte à vos systèmes : GitLab, Kubernetes, Prometheus, Jira… (cf. M7 pour la sécurité).</p>
+  <div class="grid two">
+    <div>
+      <h3><code>.mcp.json</code> — exemple GitLab</h3>
+      <pre><code>{
+  "mcpServers": {
+    "gitlab": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-gitlab"
+      ],
+      "env": {
+        "GITLAB_TOKEN": "${GITLAB_TOKEN}"
+      }
+    }
+  }
+}</code></pre>
+      <p><small>Exemple illustratif : le nom du package et les paramètres doivent correspondre au serveur MCP réellement installé. Le token vient de l'environnement, <strong>jamais du fichier</strong>.</small></p>
+    </div>
+    <div>
+      <h3>Ce que ça permet</h3>
+      <p>Une fois connecté, si le serveur expose un outil de consultation des Merge Requests :</p>
+      <div class="prompt-box">Consulte les Merge Requests ouvertes sur mon
+projet GitLab et identifie celles qui
+présentent des risques de sécurité.</div>
+      <p>L'assistant utilise les outils exposés par le serveur MCP pour réaliser l'opération.</p>
+    </div>
+  </div>
+  <div class="callout warn"><span class="t">⚠️ Rappel sécurité</span>Un serveur MCP s'exécute avec vos identifiants : sources fiables, versions épinglées, <strong>lecture seule par défaut</strong>, RBAC côté système visé (détail en M7).</div>
+</section><section class="slide">
+  <h2>🧪 Atelier 1 — Du prompt vague au prompt pro (20 min)</h2>
+  <p>Par binôme : partez d'une demande volontairement floue, réécrivez‑la avec R‑C‑C‑F‑A, comparez les résultats.</p>
+  <p>👉 <a href="ateliers.html#atelier-1"><strong>Ouvrir l'énoncé de l'atelier 1</strong></a></p>
+  <nav class="pager">
+    <a href="03-ia-dans-le-devops.html"><small>← Module précédent</small>M3 · L'IA dans le DevOps</a>
+    <a class="next" href="05-cas-usages-cycle-devops.html"><small>Module suivant →</small>M5 · Cas d'usage</a>
+  </nav>
+</section>
+
+<section class="slide">
+  <h2><span class="num">11</span>Comparaison entre les principaux assistants IA</h2>
+  <p>Les six briques existent dans tous les assistants de code : seuls les emplacements changent. Exemple avec OpenCode (open source, gratuit) face à deux références du marché :</p>
+  <div class="table-wrap"><table>
+    <tr><th>Brique</th><th>OpenCode</th><th>Claude Code (payant)</th><th>Cursor</th><th>GitHub Copilot</th></tr>
+    <tr><td><strong>Rules</strong></td><td><code>AGENTS.md</code>, <code>opencode.json</code></td><td><code>CLAUDE.md</code>, <code>.claude/rules/</code></td><td><code>.cursor/rules/</code>, <code>AGENTS.md</code></td><td><code>copilot-instructions.md</code>, <code>AGENTS.md</code></td></tr>
+    <tr><td><strong>Skills</strong></td><td><code>.opencode/skills/</code>, <code>.claude/skills/</code>, <code>.agents/skills/</code></td><td><code>.claude/skills/</code></td><td><code>.cursor/skills/</code></td><td><code>.github/skills/</code></td></tr>
+    <tr><td><strong>Commands</strong></td><td><code>.opencode/commands/</code></td><td><code>.claude/commands/</code> (ancien format)</td><td><code>.cursor/commands/</code> / plugins</td><td><code>.github/prompts/</code></td></tr>
+    <tr><td><strong>Hooks</strong></td><td>Via le système de plugins</td><td>Configuration native dans <code>settings.json</code></td><td><code>hooks.json</code></td><td><code>.github/hooks/</code></td></tr>
+    <tr><td><strong>Agents</strong></td><td><code>.opencode/agents/</code></td><td><code>.claude/agents/</code></td><td><code>.cursor/agents/</code></td><td><code>.github/agents/</code></td></tr>
+    <tr><td><strong>MCP</strong></td><td><code>opencode.json</code></td><td><code>.mcp.json</code></td><td><code>.cursor/mcp.json</code></td><td>Configuration MCP</td></tr>
+  </table></div>
+  <div class="callout key"><span class="t">À retenir</span>Le <strong>contenu des briques est portable</strong> d'un assistant à l'autre : on écrit ses règles, skills et commandes une fois, puis on les dépose au bon endroit (ou on les référence depuis <code>AGENTS.md</code>). OpenCode lit même nativement les formats <code>.claude/</code> et <code>.agents/skills/</code> : changer d'outil ne veut pas dire tout réécrire.</div>
+</section>
+
+</main>
+<footer class="foot">Formation IA &amp; DevOps — Module 4</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

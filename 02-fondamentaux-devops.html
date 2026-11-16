@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M2 · Fondamentaux du DevOps — Formation IA &amp; DevOps</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">IA &amp; DevOps · 1 jour</a>
+  <a href="01-introduction-ia.html">M1</a><a href="02-fondamentaux-devops.html">M2</a><a href="03-ia-dans-le-devops.html">M3</a><a href="04-bases-du-prompting.html">M4</a><a href="05-cas-usages-cycle-devops.html">M5</a><a href="06-monitoring-incidentologie.html">M6</a><a href="07-outils-ethique-tendances.html">M7</a><a href="ateliers.html">Ateliers</a><a href="quiz-final.html">Quiz</a>
+  <span class="spacer"></span>
+  <button data-action="notes">Notes (N)</button>
+  <button data-action="present">Présenter (P)</button>
+</header>
+
+<div class="hero"><div class="inner">
+  <div class="kicker">Module 2 · 10:10 – 10:40 · 30 min</div>
+  <h1>Rappel des fondamentaux du DevOps</h1>
+  <p>Poser un vocabulaire commun avant d'y injecter de l'IA : culture, boucle de livraison, pratiques clés et métriques de performance.</p>
+</div></div>
+
+<main>
+
+<section class="slide">
+  <div class="objectives">
+    <h3>🎯 Objectifs du module</h3>
+    <ul>
+      <li>Rappeler la définition du DevOps et ses piliers culturels (CALMS).</li>
+      <li>Décrire la boucle DevOps et les pratiques associées (CI/CD, IaC, GitOps, observabilité, DevSecOps).</li>
+      <li>Connaître les <strong>métriques DORA</strong>, qui serviront à mesurer l'apport réel de l'IA.</li>
+    </ul>
+  </div>
+  <div class="trainer">Module de « mise à niveau ». Adapter au public : avec des profils DevOps confirmés, transformer ce module en quiz oral rapide et passer plus de temps sur la section DORA, qui sert de pont vers M3.</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">1</span>DevOps : une culture avant d'être des outils</h2>
+  <p>Le DevOps vise à <strong>livrer plus vite, plus souvent et plus sûrement</strong> de la valeur aux utilisateurs, en faisant tomber le « mur » entre ceux qui développent (Dev) et ceux qui exploitent (Ops).</p>
+  <h3>Le modèle CALMS</h3>
+  <div class="grid">
+    <div class="card"><h4>C · Culture</h4><p>Favoriser la collaboration entre l'équipe de développement et l'équipe d'exploitation, <strong>sans se rejeter les responsabilités</strong>.</p></div>
+    <div class="card"><h4>A · Automation</h4><p>Automatiser tout ce qui est répétitif : build, tests, déploiement, infra.</p></div>
+    <div class="card"><h4>L · Lean</h4><p>Éliminer les tâches sans valeur ajoutée.</p></div>
+    <div class="card"><h4>M · Measurement</h4><p>Mesurer pour décider : métriques de flux, de qualité, d'exploitation.</p></div>
+    <div class="card"><h4>S · Sharing</h4><p>Partager connaissances, outils, retours d'expérience entre équipes.</p></div>
+  </div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">2</span>De la culture à la pratique</h2>
+  <div class="mermaid">
+flowchart LR
+  subgraph DEV["Dev"]
+    direction LR
+    P["📋 Plan"] --> C["💻 Code"] --> B["🔨 Build"] --> T["🧪 Test"]
+  end
+  subgraph OPS["Ops"]
+    direction LR
+    R["📦 Release"] --> D["🚀 Deploy"] --> O["⚙️ Operate"] --> M["🔭 Monitor"]
+  end
+  T --> R
+  M -->|"feedback"| P
+  </div>
+  <h3>Les étapes en détail</h3>
+  <div class="grid two">
+    <div class="card"><h4>📋 Plan</h4><p>Découper et prioriser le besoin.</p><p><small>Jira · GitLab Issues</small></p></div>
+    <div class="card"><h4>💻 Code</h4><p>Écrire et relire le code via des merge requests.</p><p><small>Git · GitLab/GitHub</small></p></div>
+    <div class="card"><h4>🔨 Build</h4><p>Produire un artefact versionné et reproductible.</p><p><small>Docker · Maven · npm</small></p></div>
+    <div class="card"><h4>🧪 Test</h4><p>Vérifier le fonctionnel et la sécurité automatiquement.</p><p><small>pytest · JUnit · Trivy</small></p></div>
+    <div class="card"><h4>📦 Release</h4><p>Versionner et publier l'artefact.</p><p><small>ECR · Harbor · Git tags</small></p></div>
+    <div class="card"><h4>🚀 Deploy</h4><p>Déployer de façon déclarative et réversible.</p><p><small>Kubernetes · Argo CD · Terraform</small></p></div>
+    <div class="card"><h4>⚙️ Operate</h4><p>Exploiter : supervision et runbooks.</p><p><small>kubectl · PagerDuty</small></p></div>
+    <div class="card"><h4>🔭 Monitor</h4><p>Observer et détecter les problèmes.</p><p><small>Prometheus · Grafana · Loki · EFK</small></p></div>
+  </div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">3</span>Les pratiques clés</h2>
+  <div class="grid two">
+    <div class="card"><h4>🔁 Intégration continue (CI)</h4><p>Chaque commit déclenche build + tests + analyses. Les problèmes sont détectés tôt et à petite échelle.</p></div>
+    <div class="card"><h4>🚚 Livraison / déploiement continu (CD)</h4><p><em>Delivery</em> : toujours prêt à livrer (déclenchement manuel). <em>Deployment</em> : chaque changement validé part en production automatiquement.</p></div>
+    <div class="card"><h4>🏗️ Infrastructure as Code (IaC)</h4><p>L'infrastructure est décrite dans du code versionné (Terraform/OpenTofu, Ansible) : reproductible, relisable, testable.</p></div>
+    <div class="card"><h4>🌀 GitOps</h4><p>Git est la source de vérité de l'état désiré ; un agent (Argo CD, Flux) <strong>réconcilie</strong> en continu le cluster avec Git. Rollback = <code>git revert</code>.</p></div>
+    <div class="card"><h4>📦 Conteneurs &amp; orchestration</h4><p>Docker pour empaqueter, Kubernetes pour orchestrer : déploiements déclaratifs, auto‑réparation, mise à l'échelle.</p></div>
+    <div class="card"><h4>🔭 Observabilité</h4><p>Métriques, logs, traces (OpenTelemetry) pour comprendre l'état interne d'un système à partir de ses sorties.</p></div>
+    <div class="card"><h4>🛡️ DevSecOps / shift‑left</h4><p>La sécurité intégrée dès le début : scan de secrets, SAST, scan d'images et d'IaC, politique de dépendances.</p></div>
+    <div class="card"><h4>🧱 Platform engineering</h4><p>Une équipe plateforme fournit des « chemins balisés » (golden paths) en libre‑service aux équipes produit.</p></div>
+  </div>
+</section>
+
+<section class="slide">
+  <h2>✅ Ce qu'il faut retenir</h2>
+  <ul>
+    <li>DevOps est une <strong>culture avant d'être des outils</strong> : CALMS (Culture, Automatisation, Lean, Mesure, Partage) et la levée des silos dev/ops.</li>
+    <li>Les <strong>pratiques clés</strong> transforment la culture en réalité : CI/CD, <strong>IaC</strong>, <strong>GitOps</strong> (Git comme source de vérité), observabilité, <strong>DevSecOps</strong> (shift-left), platform engineering.</li>
+    <li>Les métriques <strong>DORA</strong> mesurent vitesse <em>et</em> stabilité : fréquence de déploiement, délai de livraison, taux d'échec des changements, temps de restauration.</li>
+    <li>Ce sont les fondamentaux que l'IA viendra <strong>enrichir</strong> au module suivant : sans eux, pas de collaboration IA fiable.</li>
+  </ul>
+  <nav class="pager">
+    <a href="01-introduction-ia.html"><small>← Module précédent</small>M1 · Introduction à l'IA</a>
+    <a class="next" href="03-ia-dans-le-devops.html"><small>Module suivant →</small>M3 · L'IA dans le DevOps</a>
+  </nav>
+</section>
+
+</main>
+<footer class="foot">Formation IA &amp; DevOps — Module 2</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

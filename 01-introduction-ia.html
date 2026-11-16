@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M1 · Introduction à l'IA — Formation IA &amp; DevOps</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">IA &amp; DevOps · 1 jour</a>
+  <a href="01-introduction-ia.html">M1</a><a href="02-fondamentaux-devops.html">M2</a><a href="03-ia-dans-le-devops.html">M3</a><a href="04-bases-du-prompting.html">M4</a><a href="05-cas-usages-cycle-devops.html">M5</a><a href="06-monitoring-incidentologie.html">M6</a><a href="07-outils-ethique-tendances.html">M7</a><a href="ateliers.html">Ateliers</a><a href="quiz-final.html">Quiz</a>
+  <span class="spacer"></span>
+  <button data-action="notes">Notes (N)</button>
+  <button data-action="present">Présenter (P)</button>
+</header>
+
+<div class="hero"><div class="inner">
+  <div class="kicker">Module 1 · 09:20 – 10:10 · 50 min</div>
+  <h1>Introduction à l'IA</h1>
+  <p>Démystifier l'IA générative : ce qu'est un LLM, comment il « raisonne », pourquoi il se trompe avec aplomb, et comment choisir un assistant et un mode de déploiement.</p>
+</div></div>
+
+<main>
+
+<section class="slide">
+  <div class="objectives">
+    <h3>🎯 Objectifs du module</h3>
+    <ul>
+      <li>Situer l'IA générative et les LLM dans la grande famille de l'IA.</li>
+      <li>Expliquer qu'un LLM est un <strong>générateur probabiliste de tokens</strong>, et en déduire ses limites.</li>
+      <li>Distinguer les familles d'assistants (chat, IDE, CLI, agent).</li>
+      <li>Choisir un mode de déploiement selon la <strong>sensibilité des données</strong>.</li>
+    </ul>
+  </div>
+  <div class="trainer">Démarrer par une question à main levée : « Qui a utilisé une IA cette semaine pour son travail ? Pour quoi faire ? » Noter 3-4 usages au tableau, on y reviendra en M5.</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">1</span>IA, ML, Deep Learning, IA générative : qui est qui ?</h2>
+  <div class="mermaid">
+flowchart LR
+  subgraph IA["Intelligence artificielle"]
+    subgraph ML["Machine Learning"]
+      subgraph DL["Deep Learning (réseaux de neurones)"]
+        subgraph GEN["IA générative"]
+          LLM["LLM<br/>(GPT, Claude, Gemini, Mistral, Llama…)"]
+        end
+      end
+    end
+  end
+  </div>
+  <div class="table-wrap"><table>
+    <tr><th>Notion</th><th>Idée clé</th><th>Exemple Ops</th></tr>
+    <tr><td><strong>IA</strong></td><td>Faire réaliser par une machine des tâches qui demandent de l'« intelligence ».</td><td>Système expert de règles d'alerting</td></tr>
+    <tr><td><strong>Machine Learning</strong></td><td>Le système <em>apprend</em> des règles à partir de données au lieu qu'on les code.</td><td>Détection d'anomalies sur une métrique CPU</td></tr>
+    <tr><td><strong>Deep Learning</strong></td><td>ML à base de réseaux de neurones profonds, très performant sur texte, image, son.</td><td>Classification automatique de tickets</td></tr>
+    <tr><td><strong>IA générative</strong></td><td>Produit du <em>nouveau</em> contenu (texte, code, image) plutôt que de classer.</td><td>Générer un Dockerfile, un runbook</td></tr>
+    <tr><td><strong>LLM</strong></td><td>Grand modèle de langage entraîné sur d'immenses corpus de texte et de code.</td><td>Assistant qui explique un log d'erreur</td></tr>
+  </table></div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">2</span>De quoi est faite l'IA ? Les techniques d'apprentissage</h2>
+  <div class="callout key"><span class="t">La grande famille de l'IA</span>
+    <p><strong>IA = IA symbolique (≈ 5 %) + Machine Learning (≈ 95 %)</strong>.</p>
+    <ul>
+      <li><strong>IA symbolique</strong> : règles écrites par des humains (« si… alors… »), systèmes experts. Prévisible, mais ne s'adapte pas seule.</li>
+      <li><strong>Machine Learning</strong> : la machine apprend des régularités à partir de <em>données</em>. C'est là-dessus que reposent le Deep Learning, les LLM et l'IA générative.</li>
+    </ul>
+  </div>
+  <h3>Les techniques d'apprentissage</h3>
+  <div class="mermaid">
+flowchart LR
+  A["Apprentissage"] --> B["Piloté par les données"]
+  A --> C["Piloté par l'expérience<br/>(renforcement)"]
+  B --> D["Supervisé"]
+  B --> E["Non supervisé"]
+  B --> F["Semi-supervisé"]
+  C --> I["Essai-erreur<br/><em>AlphaGo, robotique, RLHF</em>"]
+  </div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">3</span>Deep Learning et IA générative</h2>
+  <h3>Le Deep Learning : apprendre des représentations, couche par couche</h3>
+  <p>Le Machine Learning classique demande à un humain de <strong>concevoir les bonnes caractéristiques</strong> (features) à partir des données brutes. Le <strong>Deep Learning</strong> s'en passe : un <strong>réseau de neurones artificiel</strong>, composé de nombreuses couches de « neurones » (de simples calculateurs : multiplication, somme, seuil), apprend <strong>lui-même</strong> les représentations utiles, du plus simple au plus abstrait.</p>
+  <div class="mermaid">
+flowchart LR
+  X["Données brutes<br/>(pixels, sons, texte)"] --> C1["Couche 1<br/>bords, motifs simples"]
+  C1 --> C2["Couche 2<br/>formes, mots, patterns"]
+  C2 --> C3["Couche 3<br/>concepts abstraits"]
+  C3 --> S["Sortie<br/>prédiction / génération"]
+  P["🔧 Des milliards de paramètres<br/>ajustés par rétropropagation<br/>(descente de gradient)"] -.-> C1
+  P -.-> C2
+  P -.-> C3
+  </div>
+  <div class="grid two">
+    <div class="card"><h4>🧠 Pourquoi « profond » ?</h4><p>Beaucoup de couches empilées. Plus le réseau est profond, plus il peut représenter des notions abstraites — à condition d'avoir <strong>énormément de données</strong> et de <strong>puissance de calcul (GPU)</strong>. C'est l'explosion des données + des GPU qui a fait décoller le deep learning (AlexNet, 2012).</p></div>
+    <div class="card"><h4>⚙️ L'entraînement en une phrase</h4><p>On montre des millions d'exemples ; à chaque passe, on mesure l'erreur, et on <strong>ajuste les poids</strong> des connexions (rétropropagation) pour la réduire. Rien d'« intelligent » : de la statistique à très grande échelle.</p></div>    <div class="card"><h4>✨ L'IA générative</h4><p>Un sous-ensemble du deep learning dont le modèle apprend la <strong>distribution des données</strong> pour en produire de <strong>nouvelles</strong> : texte et code (LLM), images (diffusion), audio… Elle <strong>génère</strong> là où les modèles classiques <strong>classifient</strong> ou prédisent une valeur.</p></div>
+  </div>
+  <div class="callout key"><span class="t">À retenir</span>Deep Learning = la technique (réseaux de neurones profonds). IA générative = le <em>usage</em> qui en est fait (produire du contenu nouveau). Un LLM est les deux à la fois : un réseau Transformer profond entraîné à générer du texte, token après token.</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">4</span>Comment fonctionne un LLM</h2>
+  <p>Un LLM <strong>,Large Language Model,</strong> ne « sait » rien au sens humain : il <strong>prédit le morceau de texte suivant le plus probable</strong> compte tenu de tout ce qui précède, puis recommence, morceau après morceau.</p>
+  <div class="mermaid">
+flowchart LR
+  A["Votre prompt<br/>+ contexte"] --> T["Découpage<br/>en tokens"]
+  T --> M["Modèle<br/>(milliards de paramètres)"]
+  M --> P["Probabilités du<br/>token suivant"]
+  P --> S["Choix d'un token<br/>(température)"]
+  S -->|"ajouté au texte, on recommence"| M
+  S --> R["Réponse"]
+  </div>
+  <div class="grid two">
+    <div class="card"><h4>🔤 Le token</h4><p>Unité élémentaire de texte qu'un LLM utilise pour lire, traiter et générer du langage : un mot, un morceau de mot ou un signe. Avant de traiter une phrase, le modèle la découpe en petits morceaux appelés tokens.</p>
+      <ul>
+        <li><strong>Compréhension</strong> — le modèle transforme le texte en tokens pour pouvoir le traiter.</li>
+        <li><strong>Génération</strong> — il prédit et génère une succession de tokens pour construire sa réponse.</li>
+        <li><strong>Coût et limites</strong> — le nombre de tokens consommés influence le coût d'utilisation des API et la quantité de contexte traitable.</li>
+      </ul></div>
+    <div class="card"><h4>🎲 La température</h4><p>Paramètre utilisé dans les LLM pour contrôler le <strong>degré d'aléatoire</strong> dans la génération des réponses.</p>
+      <ul>
+        <li><strong>Basse (0 à 0,3)</strong> — réponses plus prévisibles, constantes et précises. Ex. : générer un script Python de sauvegarde.</li>
+        <li><strong>Moyenne (0,4 à 0,7)</strong> — équilibre entre cohérence et diversité. Ex. : expliquer le fonctionnement d'une architecture Kubernetes.</li>
+        <li><strong>Élevée (0,8 à 1,5)</strong> — réponses plus variées, parfois surprenantes et moins prévisibles. Ex. : trouver des idées originales pour automatiser un processus DevOps.</li>
+      </ul></div>
+  </div>
+  <div class="callout key"><span class="t">À retenir</span>Un LLM est un grand modèle de langage entraîné pour <strong>traiter le langage humain</strong> (Comprendre des questions, Générer du texte, Résumer des documents, Traduire des langues).</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">5</span>Les limites à connaître (et leurs parades)</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Limite</th><th>Ce que c'est</th><th>Exemple DevOps</th><th>Parade</th></tr>
+    <tr><td><strong>Hallucination</strong></td><td>Réponse fluide et crédible mais fausse.</td><td>Un flag <code>kubectl</code> ou un argument Terraform qui n'existe pas ; un paquet npm/pip inventé.</td><td>Exiger une source, passer par un contrôle (<code>--dry-run</code>, <code>terraform validate</code>, lint).</td></tr>
+    <tr><td><strong>Données datées</strong></td><td>Le modèle connaît le monde jusqu'à sa date de coupure.</td><td>Syntaxe de provider obsolète, API Kubernetes dépréciée.</td><td>Fournir la doc à jour dans le contexte, préciser les versions.</td></tr>
+    <tr><td><strong>Fenêtre finie</strong></td><td>Au‑delà d'une certaine taille, l'ancien contenu est tronqué ou résumé.</td><td>Coller 5 000 lignes de logs « pour qu'il ait tout ».</td><td>Filtrer, ne donner que le pertinent.</td></tr>
+    <tr><td><strong>Non‑déterminisme</strong></td><td>Deux appels identiques peuvent donner deux réponses différentes.</td><td>Un « avis IA » utilisé comme condition de déploiement.</td><td>Ne jamais faire d'un LLM un gate bloquant.</td></tr>
+    <tr><td><strong>Complaisance</strong></td><td>Tendance à aller dans le sens de l'utilisateur.</td><td>« C'est bien un problème réseau, non ? » → « Oui, probablement ».</td><td>Questions neutres, demander des hypothèses alternatives.</td></tr>
+  </table></div>
+  <div class="callout warn"><span class="t">⚠️ Piège sécurité : le « slopsquatting »</span>Les LLM inventent parfois des noms de paquets plausibles. Des attaquants publient des paquets malveillants sous ces noms. Toujours vérifier qu'une dépendance proposée existe et est légitime avant de l'installer.</div>
+  <div class="trainer">Démo live (2 min) : demander à l'assistant « Quel est le flag kubectl pour afficher les pods triés par consommation mémoire ? ». Comparer avec la doc officielle (<code>kubectl top pods --sort-by=memory</code>). Selon les modèles, on obtient parfois un flag inventé sur <code>kubectl get</code>.</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">6</span>Les familles d'assistants</h2>
+  <div class="grid">
+    <div class="card"><div class="ico">💬</div><h4>Chat web</h4><p>Interface conversationnelle (ChatGPT, Claude.ai, Gemini, Le Chat, Copilot Chat…). Idéal pour explorer, expliquer, rédiger.</p><p><strong>Limite :</strong> rien n'est versionné ni partagé avec l'équipe.</p></div>
+    <div class="card"><div class="ico">🧑‍💻</div><h4>Assistant d'IDE</h4><p>Complétion et chat dans l'éditeur (GitHub Copilot, Cursor, JetBrains AI, Continue…). Idéal pour écrire et refactorer.</p></div>
+    <div class="card"><div class="ico">⌨️</div><h4>Agent en CLI</h4><p>Agent de code au terminal (Claude Code, Codex CLI, Gemini CLI, Copilot CLI, Mistral Vibe…). Lit le dépôt, lance des commandes, scriptable.</p></div>
+    <div class="card"><div class="ico">🤖</div><h4>Agent autonome</h4><p>Boucle « observer → raisonner → agir » avec des outils (via <strong>MCP</strong>). Peut traiter une issue, ouvrir une PR, diagnostiquer un cluster.</p></div>
+  </div>
+  <div class="mermaid">
+flowchart LR
+  A["Chat web<br/>suggère"] --> B["IDE<br/>complète"] --> C["CLI / agent<br/>exécute sous contrôle"] --> D["Agent autonome<br/>agit en boucle"]
+  style A fill:#dcfce7,stroke:#16a34a
+  style B fill:#dbeafe,stroke:#2563eb
+  style C fill:#fef3c7,stroke:#d97706
+  style D fill:#fee2e2,stroke:#dc2626
+  </div>
+  <div class="callout key"><span class="t">Ce qui distingue les familles d'assistants</span>Elles se différencient par leur <strong>fonctionnalité</strong>, leur <strong>domaine d'intervention</strong> et les <strong>tâches</strong> qu'elles sont capables de réaliser.</div>
+</section>
+
+<section class="slide">
+  <h2>✅ Ce qu'il faut retenir</h2>
+  <ul>
+    <li><strong>IA ⊃ ML ⊃ Deep Learning ⊃ IA générative ⊃ LLM</strong> : un LLM est un réseau de neurones profond entraîné sur d'immenses corpus pour générer du texte et du code.</li>
+    <li>Un LLM ne « sait » rien au sens humain : il <strong>prédit le token suivant le plus probable</strong>. Il produit du <em>plausible</em>, pas du vérifié.</li>
+    <li>Le <strong>token</strong> est son unité de base (compréhension, génération, coût et fenêtre de contexte) ; la <strong>température</strong> règle le degré d'aléatoire des réponses.</li>
+    <li>Limites clés et leurs parades : <strong>hallucination</strong> (contrôles déterministes, doc officielle), <strong>données datées</strong> (fournir le contexte à jour), <strong>fenêtre finie</strong> (filtrer l'essentiel), <strong>non‑déterminisme</strong> (jamais un LLM en gate bloquant), <strong>complaisance</strong> (questions neutres).</li>
+    <li>Quatre familles d'assistants, de la suggestion à l'action : chat web → IDE → CLI → agent autonome. <strong>Plus d'autonomie = plus de garde‑fous.</strong></li>
+    <li>Le mode de déploiement se choisit d'abord selon la <strong>sensibilité des données</strong>.</li>
+  </ul>
+  <nav class="pager">
+    <a href="index.html"><small>← Accueil</small>Programme</a>
+    <a class="next" href="02-fondamentaux-devops.html"><small>Module suivant →</small>M2 · Fondamentaux du DevOps</a>
+  </nav>
+</section>
+
+</main>
+<footer class="foot">Formation IA &amp; DevOps — Module 1</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M3 · L'IA dans le DevOps — Formation IA &amp; DevOps</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">IA &amp; DevOps · 1 jour</a>
+  <a href="01-introduction-ia.html">M1</a><a href="02-fondamentaux-devops.html">M2</a><a href="03-ia-dans-le-devops.html">M3</a><a href="04-bases-du-prompting.html">M4</a><a href="05-cas-usages-cycle-devops.html">M5</a><a href="06-monitoring-incidentologie.html">M6</a><a href="07-outils-ethique-tendances.html">M7</a><a href="ateliers.html">Ateliers</a><a href="quiz-final.html">Quiz</a>
+  <span class="spacer"></span>
+  <button data-action="notes">Notes (N)</button>
+  <button data-action="present">Présenter (P)</button>
+</header>
+
+<div class="hero"><div class="inner">
+  <div class="kicker">Module 3 · 10:55 – 11:30 · 35 min</div>
+  <h1>L'IA dans le DevOps</h1>
+  <p>Pourquoi l'IA et le DevOps se rencontrent, où elle intervient sur le cycle, ce qu'elle apporte, et les défis à ne pas cacher.</p>
+</div></div>
+
+<main>
+
+<section class="slide">
+  <div class="objectives">
+    <h3>🎯 Objectifs du module</h3>
+    <ul>
+      <li>Expliquer <strong>pourquoi</strong> l'IA et le DevOps convergent naturellement.</li>
+      <li>Définir l'<strong>AIOps</strong> et distinguer <strong>AIOps / MLOps / LLMOps</strong>.</li>
+      <li>Situer les apports de l'IA sur <strong>toutes les phases</strong> du cycle DevOps.</li>
+      <li>Identifier les <strong>enjeux</strong> (fiabilité, sécurité, gouvernance, responsabilité…) et les <strong>opportunités</strong> mesurables avec DORA.</li>
+    </ul>
+  </div>
+  <div class="trainer">Accroche possible : « Quelle tâche répétitive aimeriez-vous déléguer à une IA dans votre pipeline ? ». Noter 2-3 réponses au tableau, on y revient sur les slides opportunités.</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">1</span>La convergence : pourquoi l'IA et le DevOps se rencontrent</h2>
+  <div class="callout key"><span class="t">Message clé</span>Le DevOps <strong>produit des données en continu</strong>, et l'IA sait les exploiter.</div>
+  <div class="grid two">
+    <div class="card"><h4>🛠️ Un terrain naturel</h4><p>Un pipeline CI/CD génère <strong>logs, métriques, traces, historiques de commits, tickets d'incidents</strong>… C'est exactement la matière première de l'IA.</p></div>
+    <div class="card"><h4>🎯 Des objectifs communs</h4><p>Vitesse, qualité, fiabilité, moins de travail répétitif. L'IA prolonge l'automatisation DevOps : d'une automatisation par <strong>règles fixes</strong> vers une automatisation qui <strong>s'adapte</strong>.</p></div>
+    <div class="card"><h4>🌀 Une complexité croissante</h4><p>Microservices, conteneurs, multi-cloud, Kubernetes : un humain ne peut plus <strong>corréler seul</strong> des milliers de signaux.</p></div>
+  </div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">2</span>Qu'est-ce que l'AIOps ?</h2>
+  <p><strong>L'AIOps (Artificial Intelligence for IT Operations)</strong> désigne l'application de l'intelligence artificielle pour améliorer et automatiser les opérations informatiques.</p>
+  <div class="grid">
+    <div class="card"><h4>🎯 Objectifs</h4><p>Optimiser les processus DevOps en intégrant des capacités d'<strong>analyse avancée</strong>, de <strong>détection proactive</strong> des problèmes et d'<strong>automatisation intelligente</strong>.</p></div>
+    <div class="card"><h4>🔧 Technologies</h4><p>Combinaison d'algorithmes de <strong>ML / Deep Learning</strong>, d'analyse de <strong>big data</strong> et d'outils d'automatisation pour traiter les données opérationnelles en <strong>temps réel</strong>.</p></div>
+    <div class="card"><h4>📈 Bénéfices</h4><p>Réduction des <strong>temps d'arrêt</strong>, amélioration de la <strong>performance des applications</strong>, optimisation des <strong>ressources</strong> et réduction des <strong>tâches manuelles</strong>.</p></div>
+  </div>
+  <div class="trainer">Détail et exemples concrets (corrélation d'alertes, détection d'anomalies, analyse de cause) au <a href="06-monitoring-incidentologie.html">module 6</a>.</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">3</span>Trois notions à distinguer</h2>
+  <div class="grid">
+    <div class="card"><h4>🖥️ AIOps</h4><p>L'IA appliquée aux <strong>opérations</strong> : supervision, incidents, corrélation d'alertes, analyse de cause racine.</p></div>
+    <div class="card"><h4>🤖 MLOps</h4><p><strong>Industrialiser le cycle de vie</strong> des modèles de machine learning : versionner, déployer, surveiller la dérive.</p></div>
+    <div class="card"><h4>💬 LLMOps</h4><p>Même logique, spécifique aux <strong>grands modèles de langage</strong> : prompts, évaluation, coûts, garde-fous.</p></div>
+  </div>
+  <div class="callout warn"><span class="t">🔥 Tendance récente : les agents IA</span>Des agents capables d'<strong>agir</strong>, pas seulement de suggérer : corriger un bug, ouvrir une pull request, diagnostiquer un incident, modifier de l'Infrastructure as Code. Plus d'autonomie = plus de garde-fous (voir la règle d'or, slide suivante).</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">4</span>Vue d'ensemble : l'IA sur tout le cycle DevOps</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Phase</th><th>Apport de l'IA</th><th>Exemples</th></tr>
+    <tr><td><strong>Plan</strong></td><td>Rédaction de user stories, estimation, priorisation</td><td>Assistants de gestion de projet</td></tr>
+    <tr><td><strong>Code</strong></td><td>Génération et complétion de code, revue assistée</td><td>GitHub Copilot, Claude Code, Cursor</td></tr>
+    <tr><td><strong>Build / Test</strong></td><td>Génération de tests, détection des tests instables (flaky), priorisation des tests</td><td>Outils de test intelligents</td></tr>
+    <tr><td><strong>Sécurité (DevSecOps)</strong></td><td>Détection de vulnérabilités, analyse de dépendances, détection de secrets</td><td>Snyk, GitHub Advanced Security</td></tr>
+    <tr><td><strong>Release / Deploy</strong></td><td>Analyse de risque d'un déploiement, canary et rollback automatiques</td><td>Déploiement progressif piloté par métriques</td></tr>
+    <tr><td><strong>Operate / Monitor</strong></td><td>Détection d'anomalies, corrélation d'alertes, analyse de cause racine</td><td>Datadog, Dynatrace, PagerDuty (AIOps)</td></tr>
+    <tr><td><strong>Feedback</strong></td><td>Synthèse de retours utilisateurs, post-mortems automatisés</td><td>Résumés d'incidents</td></tr>
+  </table></div>
+  <p>Détail et exemples concrets dans le <a href="05-cas-usages-cycle-devops.html">module 5</a> et le <a href="06-monitoring-incidentologie.html">module 6</a>.</p>
+  <div class="trainer">Message à faire passer : l'IA n'intervient pas seulement quand le dev écrit du code. Faire réagir la salle : « Et vous, à quelle phase voyez-vous le plus gros gain immédiat ? »</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">5</span>La règle d'or : proposer / contrôler / valider</h2>
+  <p>Toute interaction IA dans la chaîne DevOps relève de l'une de ces trois natures :</p>
+  <div class="grid">
+    <div class="card" style="border-top:4px solid #2563eb"><h4>🤖 Proposition IA</h4><p>L'assistant <strong>suggère</strong> : un fichier, une hypothèse, un résumé. Probabiliste, réversible, sans effet de bord.</p></div>
+    <div class="card" style="border-top:4px solid #16a34a"><h4>✅ Contrôle déterministe</h4><p>Un outil <strong>tranche</strong> : tests, lint, <code>--dry-run</code>, Trivy, Gitleaks, policy. Reproductible et auditable.</p></div>
+    <div class="card" style="border-top:4px solid #dc2626"><h4>🧑 Validation humaine</h4><p>Une personne <strong>autorise</strong> les actions sensibles : merge, prod, suppression, secrets. Tracée.</p></div>
+  </div>
+  <div class="mermaid">
+flowchart LR
+  D["Besoin"] -->|"prompt"| P["🤖 Proposition IA"]
+  P --> G{"✅ Gate<br/>déterministe"}
+  G -->|"échec"| F["Retour / correction"]
+  F --> P
+  G -->|"succès"| S{"Action<br/>sensible ?"}
+  S -->|"non"| I["Intégration"]
+  S -->|"oui"| H["🧑 Validation humaine<br/>tracée"]
+  H --> PR["Production"]
+  style P fill:#dbeafe,stroke:#2563eb
+  style G fill:#dcfce7,stroke:#16a34a
+  style H fill:#fee2e2,stroke:#dc2626
+  </div></section>
+
+<section class="slide">
+  <h2><span class="num">6</span>Les enjeux : les défis à ne pas cacher</h2>
+  <div class="grid two">
+    <div class="card"><h4>🧪 Qualité et fiabilité</h4><p>Le code généré peut être <strong>faux, obsolète ou inefficace</strong> (hallucinations). Il doit toujours être relu et testé.</p></div>
+    <div class="card"><h4>🔐 Sécurité</h4><p>Code vulnérable généré, <strong>fuite de données sensibles</strong> dans les prompts, dépendances inventées, <strong>injection de prompt</strong> sur des agents ayant des droits élevés.</p></div>
+    <div class="card"><h4>⚖️ Gouvernance et conformité</h4><p><strong>RGPD</strong>, <strong>AI Act</strong> européen, propriété intellectuelle, traçabilité des décisions.</p></div>
+    <div class="card"><h4>🧑‍⚖️ Responsabilité</h4><p>Qui est responsable en cas d'incident causé par un agent ? Définir le <strong>niveau d'autonomie</strong> (<em>human in the loop</em>).</p></div>
+    <div class="card"><h4>🎓 Compétences</h4><p>Risque de <strong>dépendance</strong> et de déqualification des juniors : il faut savoir <strong>vérifier</strong> plus que produire.</p></div>
+    <div class="card"><h4>💰 Coûts et intégration</h4><p>Coût des licences et des appels, intégration aux outils existants, <strong>qualité des données</strong>.</p></div>
+    <div class="card"><h4>🔍 Explicabilité</h4><p>Comprendre <strong>pourquoi</strong> un système a pris telle décision pour pouvoir le corriger.</p></div>
+    <div class="card"><h4>🤝 Culture</h4><p>L'adoption est avant tout un <strong>sujet d'équipe</strong>, pas seulement d'outil.</p></div>
+  </div>
+  <div class="big-quote">« L'IA est un copilote, pas un pilote automatique. »</div>
+  <div class="trainer">Demander à la salle : « Qui a déjà copié-collé du code propriétaire dans un chatbot public ? » (réticence garantie) — puis rebondir sur la gouvernance (RGPD, AI Act, charte d'usage).</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">7</span>Les opportunités</h2>
+  <div class="grid two">
+    <div class="card"><h4>⚡ Productivité</h4><p>Moins de tâches répétitives : scripts, documentation, YAML, Dockerfiles, tests de base.</p></div>
+    <div class="card"><h4>🧪 Qualité</h4><p>Meilleure <strong>couverture de tests</strong>, revues de code plus rapides, détection précoce des défauts.</p></div>
+    <div class="card"><h4>🛡️ Fiabilité</h4><p>Réduction du <strong>MTTD</strong> et du <strong>MTTR</strong> (temps de détection et de résolution), détection proactive des anomalies.</p></div>
+    <div class="card"><h4>🔐 Sécurité</h4><p>Le « <strong>shift left</strong> » renforcé : des vulnérabilités détectées dès le code.</p></div>
+    <div class="card"><h4>🎓 Montée en compétence</h4><p>L'IA joue le rôle de <strong>tuteur</strong> et accélère l'onboarding.</p></div>
+    <div class="card"><h4>🧭 Rôle des ingénieurs</h4><p>Moins d'exécution manuelle, plus de <strong>conception, d'architecture et de supervision</strong>.</p></div>
+  </div>
+  <div class="callout tip"><span class="t">📊 Impact mesurable avec DORA</span>Fréquence de déploiement, délai de livraison, taux d'échec des changements, temps de restauration : c'est la grille pour évaluer concrètement l'apport de l'IA (vu au <a href="02-fondamentaux-devops.html">module 2</a>).</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">8</span>Les anti‑patterns à éviter</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Anti‑pattern</th><th>Pourquoi c'est dangereux</th><th>Bonne pratique</th></tr>
+    <tr><td>Commiter la sortie brute de l'IA</td><td>Plausible ≠ correct ; oublis de sécurité (probes, limits, secrets).</td><td>La sortie IA est une <strong>proposition</strong> : relue, testée, durcie.</td></tr>
+    <tr><td>L'IA comme gate bloquant</td><td>Non reproductible, manipulable.</td><td>Gates déterministes + IA en assistance non bloquante.</td></tr>
+    <tr><td><em>Shadow AI</em></td><td>Code et données envoyés à des outils non validés.</td><td>Politique d'usage + outils autorisés.</td></tr>
+    <tr><td>Mesurer en « lignes générées »</td><td>Incite aux gros lots, à la dette.</td><td>Mesurer avec DORA + satisfaction développeur.</td></tr>
+    <tr><td>Agent avec droits admin en prod</td><td>Une erreur ou une injection = incident immédiat.</td><td>Moindre privilège, lecture seule, dry‑run, validation humaine.</td></tr>
+  </table></div>
+</section>
+
+<section class="slide">
+  <h2>✅ Ce qu'il faut retenir</h2>
+  <ul>
+    <li>Le DevOps produit des données en continu ; l'IA sait les exploiter : la convergence est <strong>naturelle</strong>.</li>
+    <li><strong>AIOps</strong> = l'IA pour les opérations ; <strong>MLOps</strong> = industrialiser les modèles ; <strong>LLMOps</strong> = idem pour les grands modèles de langage.</li>
+    <li>L'IA intervient à <strong>toutes les phases</strong> du cycle, du Plan au Feedback — et les agents IA commencent à <strong>agir</strong>, pas seulement à suggérer.</li>
+    <li>Enjeux majeurs : fiabilité, sécurité, gouvernance (RGPD, AI Act), <strong>responsabilité</strong> et niveau d'autonomie (<em>human in the loop</em>), compétences, coûts.</li>
+    <li>Opportunités mesurables avec <strong>DORA</strong> : productivité, qualité, MTTD/MTTR, shift left renforcé.</li>
+    <li><strong>L'IA est un copilote, pas un pilote automatique</strong> : les fondamentaux (tests, CI/CD, observabilité, sécurité) deviennent plus importants, pas moins. Commencer petit, mesurer, puis étendre.</li>
+  </ul>
+  <nav class="pager">
+    <a href="02-fondamentaux-devops.html"><small>← Module précédent</small>M2 · Fondamentaux du DevOps</a>
+    <a class="next" href="04-bases-du-prompting.html"><small>Module suivant →</small>M4 · Les bases du prompting</a>
+  </nav>
+</section>
+
+</main>
+<footer class="foot">Formation IA &amp; DevOps — Module 3</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

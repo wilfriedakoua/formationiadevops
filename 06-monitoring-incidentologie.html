@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M6 · Monitoring et incidentologie — Formation IA &amp; DevOps</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">IA &amp; DevOps · 1 jour</a>
+  <a href="01-introduction-ia.html">M1</a><a href="02-fondamentaux-devops.html">M2</a><a href="03-ia-dans-le-devops.html">M3</a><a href="04-bases-du-prompting.html">M4</a><a href="05-cas-usages-cycle-devops.html">M5</a><a href="06-monitoring-incidentologie.html">M6</a><a href="07-outils-ethique-tendances.html">M7</a><a href="ateliers.html">Ateliers</a><a href="quiz-final.html">Quiz</a>
+  <span class="spacer"></span>
+  <button data-action="notes">Notes (N)</button>
+  <button data-action="present">Présenter (P)</button>
+</header>
+
+<div class="hero"><div class="inner">
+  <div class="kicker">Module 6 · 15:15 – 16:20 · 35 min + atelier 30 min</div>
+  <h1>Monitoring et incidentologie</h1>
+  <p>Des signaux à la résolution : observabilité, AIOps, diagnostic assisté par IA, RAG sur les runbooks, agents supervisés et post‑mortems.</p>
+</div></div>
+
+<main>
+
+<section class="slide">
+  <div class="objectives">
+    <h3>🎯 Objectifs du module</h3>
+    <ul>
+      <li>Relier métriques, logs et traces à la question à laquelle chacun répond.</li>
+      <li>Nommer les <strong>5 capacités de l'AIOps</strong> et savoir quand préférer un seuil à la détection d'anomalies.</li>
+      <li>Mener un diagnostic assisté avec la méthode <strong>Hypothèse → Preuve → Correctif</strong>.</li>
+      <li>Comprendre le <strong>RAG</strong> appliqué aux runbooks et la <strong>chaîne agentique supervisée</strong>.</li>
+      <li>Rédiger un post‑mortem <em>blameless</em> avec l'aide de l'IA.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">1</span>Les signaux de l'observabilité</h2>
+  <div class="grid">
+    <div class="card"><div class="ico">📈</div><h4>Métrique — « combien ? »</h4><p>Valeur numérique agrégée dans le temps (taux d'erreur, latence p95, CPU). <strong>Déclenche</strong> l'alerte. <em>Prometheus</em></p></div>
+    <div class="card"><div class="ico">📜</div><h4>Log — « quoi ? »</h4><p>Événement horodaté (« connexion à la base refusée »). <strong>Explique</strong>. <em>Loki, Elasticsearch</em></p></div>
+    <div class="card"><div class="ico">🧵</div><h4>Trace — « où ? »</h4><p>Parcours d'une requête entre services, avec le temps passé à chaque étape. <strong>Localise</strong>. <em>Tempo, Jaeger</em></p></div>
+  </div>
+  <div class="mermaid">
+flowchart LR
+  subgraph SRC["Sources"]
+    A["Apps instrumentées<br/>(SDK OpenTelemetry)"]
+    N["node_exporter<br/>(infra)"]
+    BB["blackbox / synthetic<br/>(sondes actives)"]
+  end
+  A --> C["OpenTelemetry<br/>Collector"]
+  N --> C
+  BB --> C
+  C --> PR["Prometheus<br/>métriques"]
+  C --> LO["Loki<br/>logs"]
+  C --> TE["Tempo<br/>traces"]
+  PR --> GR["Grafana"]
+  LO --> GR
+  TE --> GR
+  PR --> AM["Alertmanager"] --> ON["Astreinte<br/>(Slack, PagerDuty…)"]
+  </div>
+  <div class="callout tip"><span class="t">💡 Réflexe de diagnostic</span><strong>Métrique → log → trace</strong> : la métrique dit que ça va mal, le log dit ce qui s'est passé, la trace dit où. OpenTelemetry permet d'instrumenter une fois et d'envoyer vers n'importe quel backend.</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">2</span>SLI, SLO, budget d'erreur : alerter sur ce qui compte</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Notion</th><th>Définition</th><th>Exemple BookShelf</th></tr>
+    <tr><td><strong>SLI</strong></td><td>Indicateur mesuré du niveau de service.</td><td>% de requêtes <code>catalog-api</code> en succès en moins de 300 ms</td></tr>
+    <tr><td><strong>SLO</strong></td><td>Objectif cible sur ce SLI.</td><td>99,5 % sur 30 jours glissants</td></tr>
+    <tr><td><strong>Budget d'erreur</strong></td><td>La part d'échec tolérée (100 % − SLO).</td><td>0,5 % ≈ 3 h 36 min d'indisponibilité par mois</td></tr>
+  </table></div>
+  <div class="callout warn"><span class="t">⚠️ La fatigue d'alerte</span>Une astreinte qui reçoit 200 alertes par nuit finit par ignorer la vraie. Alerter sur les <strong>symptômes vécus par l'utilisateur</strong> (SLO) plutôt que sur chaque cause possible (CPU à 80 %), et réduire le bruit (regroupement, inhibition, déduplication).</div>
+  <div class="prompt-box">Tu es SRE. Voici les métriques Prometheus exposées par catalog-api (liste ci-dessous).
+Propose : 1 SLI de disponibilité et 1 SLI de latence en PromQL, un SLO réaliste pour chacun, et une règle d'alerte de type « burn rate » multi-fenêtres pour Alertmanager.
+Explique chaque requête en une phrase.</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">3</span>L'AIOps : 5 capacités</h2>
+  <div class="grid">
+    <div class="card"><h4>🔎 Détection d'anomalies</h4><p>Repérer une déviation par rapport au comportement appris (y compris saisonnalité), sans seuil fixe.</p></div>
+    <div class="card"><h4>🔗 Corrélation d'alertes</h4><p>Regrouper les signaux ayant une même cause : 5xx sur 3 services + base en panne = <strong>1 incident</strong>, pas 4.</p></div>
+    <div class="card"><h4>🔇 Réduction du bruit</h4><p>Dédupliquer, grouper, inhiber pour que l'astreinte ne soit réveillée que pour l'essentiel.</p></div>
+    <div class="card"><h4>🩺 Aide au diagnostic</h4><p>Proposer une cause probable en croisant topologie, chronologie et signaux.</p></div>
+    <div class="card"><h4>🔮 Maintenance prédictive</h4><p>Anticiper : « au rythme actuel, ce disque sera plein dans 3 jours ».</p></div>
+  </div>
+  <h3>Seuil déterministe ou détection d'anomalies ?</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Critère</th><th>Seuil (<code>expr &gt; X</code>)</th><th>Détection d'anomalies</th></tr>
+    <tr><td>Principe</td><td>Valeur fixée à la main</td><td>Écart à un comportement appris</td></tr>
+    <tr><td>Saisonnalité</td><td>Ignorée</td><td>Prise en compte</td></tr>
+    <tr><td>Auditabilité</td><td>Totale</td><td>Partielle (modèle)</td></tr>
+    <tr><td>Idéal pour</td><td>SLO, métriques critiques connues</td><td>Nombreuses métriques à variations normales</td></tr>
+  </table></div>
+  <div class="callout key"><span class="t">On empile, on ne remplace pas</span>Seuils déterministes sur les métriques critiques (SLO) + détection d'anomalies sur le reste. Un modèle peut se tromper de « normalité » (ex. pic de trafic légitime un jour de soldes).</div>
+  <div class="callout src">Plateformes du marché avec capacités AIOps : Datadog (Watchdog, Bits AI), Dynatrace (Davis AI), New Relic, Splunk ITSI, PagerDuty AIOps, ServiceNow… Côté open source : Prometheus + Alertmanager (regroupement, inhibition), Grafana (ML / prévisions selon édition). Séparer les capacités documentées des annonces marketing.</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">4</span>Le cycle de vie d'un incident… et la place de l'IA</h2>
+  <div class="mermaid">
+flowchart LR
+  D["🚨 Détection"] --> T["🗂️ Triage"] --> DG["🩺 Diagnostic"] --> MI["🩹 Mitigation"] --> R["✅ Résolution"] --> PM["📝 Post-mortem"]
+  PM -.->|"runbooks, alertes, tests"| D
+  </div>
+  <div class="table-wrap"><table>
+    <tr><th>Phase</th><th>Apport de l'IA</th><th>Reste humain</th></tr>
+    <tr><td>Détection</td><td>Anomalies, corrélation, réduction du bruit (AIOps).</td><td>Définition des SLO et des seuils critiques.</td></tr>
+    <tr><td>Triage</td><td>Résumé de l'alerte, services impactés, runbook pertinent (RAG).</td><td>Sévérité, déclaration d'incident, rôles.</td></tr>
+    <tr><td>Diagnostic</td><td>Hypothèses classées, requêtes PromQL/LogQL, lecture de logs volumineux.</td><td>Exiger les preuves, trancher.</td></tr>
+    <tr><td>Mitigation</td><td>Proposer des actions (rollback, scale, feature flag) et la commande associée.</td><td><strong>Valider et exécuter</strong> (de préférence via Git).</td></tr>
+    <tr><td>Communication</td><td>Brouillons de messages de statut pour les parties prenantes.</td><td>Relecture et envoi.</td></tr>
+    <tr><td>Post‑mortem</td><td>Timeline à partir des logs et du canal d'incident, premier jet.</td><td>Validation des faits, actions correctives.</td></tr>
+  </table></div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">5</span>Diagnostic assisté : la méthode H‑P‑C</h2>
+  <p>Un LLM ne dit jamais spontanément « je ne sais pas » : il propose la cause la plus fréquente, avec aplomb. La méthode <strong>Hypothèse → Preuve → Correctif</strong> transforme cet aplomb en démarche traçable.</p>
+  <div class="mermaid">
+flowchart LR
+  S["Signaux<br/>logs, métriques"] --> H["💡 Hypothèses<br/>l'IA propose"]
+  H --> P["🔍 Preuves<br/>on exige"]
+  P -->|"preuve trouvée"| C["🩹 Correctif<br/>on décide"]
+  P -->|"pas de preuve"| H
+  C --> V["🧑 Validation<br/>puis application"]
+  style H fill:#dbeafe,stroke:#2563eb
+  style P fill:#fef3c7,stroke:#d97706
+  style V fill:#fee2e2,stroke:#dc2626
+  </div>
+  <h3>Prompt de diagnostic réutilisable</h3>
+  <div class="prompt-box">Tu es SRE d'astreinte sur BookShelf (Kubernetes, FastAPI, PostgreSQL).
+Symptôme : depuis 14:03, taux de 5xx de catalog-api à 35 % (normal < 0,5 %). Dernier déploiement : 13:55 (v2.4.0).
+Données ci-dessous (anonymisées).
+1. Propose 3 hypothèses classées par probabilité.
+2. Pour chacune, cite la ou les lignes de log / métriques qui la soutiennent ou la contredisent.
+3. Propose la commande ou requête de vérification (lecture seule uniquement).
+4. Propose une mitigation et indique si elle est réversible.
+Si les données sont insuffisantes, dis-le et indique ce qu'il faut collecter.
+&lt;logs&gt;...&lt;/logs&gt;
+&lt;metriques&gt;...&lt;/metriques&gt;
+&lt;events_k8s&gt;...&lt;/events_k8s&gt;</div>
+  <div class="trainer">Insister sur « lecture seule uniquement » et sur « si les données sont insuffisantes, dis‑le » : ces deux phrases réduisent fortement les hallucinations et les commandes dangereuses.</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">6</span>Le RAG : donner à l'IA vos runbooks</h2>
+  <p>Le <strong>RAG</strong> (<em>Retrieval‑Augmented Generation</em>) consiste à aller chercher les documents pertinents dans <strong>votre</strong> base de connaissances, puis à les injecter dans le prompt pour que la réponse s'appuie dessus — avec citation de la source.</p>
+  <div class="mermaid">
+flowchart LR
+  subgraph IDX["Indexation (en amont)"]
+    direction TB
+    DOC["Runbooks, post-mortems,<br/>docs d'archi (Markdown)"] --> CH["Découpage<br/>(chunking)"] --> EM["Embeddings<br/>(vecteurs)"] --> VS[("Base vectorielle<br/>pgvector, Qdrant…")]
+  end
+  subgraph Q["À chaque question / alerte"]
+    direction TB
+    AL["Alerte ou question"] --> RE["Recherche des<br/>passages proches"]
+    RE --> LLM["LLM + passages"]
+    LLM --> AN["Réponse<br/>avec sources citées"]
+  end
+  VS --> RE
+  </div>
+  <div class="grid two">
+    <div class="card"><h4>✅ Exemple : alerte enrichie</h4><p>Alertmanager envoie l'alerte <code>CatalogHighErrorRate</code> à un webhook → le service RAG retrouve le runbook « Erreurs 5xx catalog‑api » et 2 post‑mortems similaires → message Slack : résumé, étapes de vérification, liens sources.</p></div>
+    <div class="card"><h4>⚠️ Limites</h4><ul>
+      <li>« Garbage in, garbage out » : un runbook obsolète produit une réponse obsolète… avec aplomb.</li>
+      <li>La recherche peut rater le bon passage (découpage, vocabulaire).</li>
+      <li>Droits d'accès : le RAG ne doit pas exposer des documents qu'un utilisateur n'a pas le droit de lire.</li>
+    </ul></div>
+  </div>
+  <div class="callout tip"><span class="t">💡 Prérequis</span>Des runbooks <strong>courts, à jour, structurés</strong> (un titre par alerte, étapes numérotées). La qualité du RAG dépend d'abord de l'hygiène documentaire.</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">7</span>La chaîne agentique supervisée</h2>
+  <p>Assembler détection, collecte de contexte, RAG et proposition d'action — avec <strong>un humain qui garde la main</strong> sur l'action.</p>
+  <div class="mermaid">
+sequenceDiagram
+  participant AM as Alertmanager
+  participant AG as Agent IA
+  participant MCP as Outils MCP (lecture seule)
+  participant RAG as RAG runbooks
+  participant H as SRE d'astreinte
+  participant GIT as Git / Argo CD
+  AM->>AG: 1. Alerte CatalogHighErrorRate
+  AG->>MCP: 2. Collecte : pods, events, logs, métriques
+  AG->>RAG: 3. Runbook + incidents similaires
+  AG->>H: 4. Diagnostic + preuves + action proposée (rollback v2.4.0)
+  H->>H: 5. Validation humaine
+  H->>GIT: 6. Exécution via PR GitOps (revert)
+  GIT-->>H: Sync OK, 5xx revenus à 0,2 %
+  AG->>H: 7. Brouillon de post-mortem
+  </div>
+  <div class="table-wrap"><table>
+    <tr><th>Action</th><th>Automatisable ?</th></tr>
+    <tr><td>Lire l'état du cluster, des logs, des métriques</td><td>✅ Oui (lecture seule, périmètre borné)</td></tr>
+    <tr><td>Enrichir une alerte, proposer un diagnostic</td><td>✅ Oui (non bloquant)</td></tr>
+    <tr><td>Redémarrer un pod en environnement de test</td><td>🟨 Possible si réversible, borné et tracé</td></tr>
+    <tr><td>Rollback, scale, modification en production</td><td>🟥 Validation humaine, de préférence via PR Git</td></tr>
+    <tr><td>Suppression de données, rotation de secrets, droits d'accès</td><td>🟥 Toujours humain</td></tr>
+  </table></div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">8</span>Le post‑mortem assisté (blameless)</h2>
+  <div class="grid">
+    <div class="card"><h4>1. Résumé &amp; impact</h4><p>Ce qui s'est passé, qui a été touché, combien de temps, budget d'erreur consommé.</p></div>
+    <div class="card"><h4>2. Chronologie</h4><p>Faits horodatés : détection, actions, résolution.</p></div>
+    <div class="card"><h4>3. Cause racine</h4><p>Preuve à l'appui. Facteurs contributifs (techniques et organisationnels).</p></div>
+    <div class="card"><h4>4. Actions</h4><p>Correctives et préventives, avec responsable et échéance.</p></div>
+    <div class="card"><h4>5. Leçons</h4><p>Ce qui a bien marché, ce qui a manqué, ce qu'on capitalise (runbook, alerte, test, règle IA).</p></div>
+  </div>
+  <div class="prompt-box">À partir de l'export du canal d'incident et des logs ci-dessous, rédige un premier jet de post-mortem au format : résumé, impact, chronologie (heure : fait), cause racine, facteurs contributifs, actions (responsable à compléter), leçons.
+Ton factuel et sans blâme : décris des systèmes et des processus, jamais des fautes individuelles.
+Marque [À VÉRIFIER] tout fait que tu déduis sans preuve explicite.</div>
+  <div class="callout key"><span class="t">Boucle vertueuse</span>Chaque post‑mortem alimente les runbooks… qui alimentent le RAG… qui accélère le prochain diagnostic. Et chaque erreur récurrente de l'IA devient une nouvelle <strong>rule</strong> dans le dépôt.</div>
+</section>
+
+<section class="slide">
+  <h2>🧪 Atelier 4 — Diagnostiquer un incident avec l'IA (30 min)</h2>
+  <p>Logs, métriques et événements Kubernetes fournis : appliquer H‑P‑C, proposer une mitigation, rédiger le post‑mortem.</p>
+  <p>👉 <a href="ateliers.html#atelier-4"><strong>Ouvrir l'énoncé de l'atelier 4</strong></a></p>
+  <nav class="pager">
+    <a href="05-cas-usages-cycle-devops.html"><small>← Module précédent</small>M5 · Cas d'usage</a>
+    <a class="next" href="07-outils-ethique-tendances.html"><small>Module suivant →</small>M7 · Outils, éthique, tendances</a>
+  </nav>
+</section>
+
+</main>
+<footer class="foot">Formation IA &amp; DevOps — Module 6</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ateliers pratiques — Formation IA &amp; DevOps</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">IA &amp; DevOps · 1 jour</a>
+  <a href="01-introduction-ia.html">M1</a><a href="02-fondamentaux-devops.html">M2</a><a href="03-ia-dans-le-devops.html">M3</a><a href="04-bases-du-prompting.html">M4</a><a href="05-cas-usages-cycle-devops.html">M5</a><a href="06-monitoring-incidentologie.html">M6</a><a href="07-outils-ethique-tendances.html">M7</a><a href="ateliers.html">Ateliers</a><a href="quiz-final.html">Quiz</a>
+  <span class="spacer"></span>
+  <button data-action="notes">Notes (N)</button>
+  <button data-action="present">Présenter (P)</button>
+</header>
+
+<div class="hero"><div class="inner">
+  <div class="kicker">Pratique · ~2 h 45 au total</div>
+  <h1>Ateliers pratiques</h1>
+  <p>Six ateliers « papier + assistant », réalisables avec n'importe quel assistant IA autorisé par votre entreprise. Aucun cluster requis ; les commandes de validation sont fournies pour ceux qui disposent d'un environnement. L'atelier 6, plus long, fait la synthèse de la journée.</p>
+</div></div>
+
+<main>
+
+<section class="slide toc-slide">
+  <div class="toc">
+    <strong>Sommaire</strong>
+    <ol>
+      <li><a href="#atelier-1">Du prompt vague au prompt pro</a> · 20'</li>
+      <li><a href="#atelier-2">Générer puis durcir un déploiement Kubernetes</a> · 25'</li>
+      <li><a href="#atelier-3">Script legacy &amp; pipeline en échec</a> · 20'</li>
+      <li><a href="#atelier-4">Diagnostiquer un incident avec l'IA</a> · 30'</li>
+      <li><a href="#atelier-5">Autorisé, à anonymiser ou interdit ?</a> · 10'</li>
+      <li><a href="#atelier-6">Mettre en place l'IA dans une stratégie DevOps</a> · 45'</li>
+    </ol>
+  </div>
+  <div class="callout warn"><span class="t">⚠️ Règle commune à tous les ateliers</span>Toutes les données fournies sont fictives. N'ajoutez <strong>aucune</strong> donnée réelle de votre entreprise (secrets, logs, noms de clients) dans les prompts.</div>
+  <div class="trainer">Faire travailler en binômes (un « pilote » au clavier, un « relecteur » qui challenge l'IA), et inverser les rôles à chaque atelier. Debrief collectif de 5 minutes à la fin de chacun : « qu'est‑ce que l'IA a oublié ? »</div>
+</section>
+
+<!-- ================= ATELIER 1 ================= -->
+<section class="slide" id="atelier-1">
+  <h2><span class="num">1</span>Du prompt vague au prompt pro <span class="duration">⏱ 20 min · M4</span></h2>
+  <p><strong>Objectif :</strong> mesurer concrètement l'effet d'un prompt structuré (R‑C‑C‑F‑A) sur la qualité d'un artefact.</p>
+  <h3>Étape 1 — Le prompt naïf (3 min)</h3>
+  <div class="prompt-box bad">Fais-moi un Dockerfile pour mon API Python.</div>
+  <p>Envoyez‑le tel quel. Notez <strong>toutes les hypothèses</strong> que l'assistant a faites à votre place (version de Python, serveur, port, utilisateur…).</p>
+  <h3>Étape 2 — Le prompt structuré (10 min)</h3>
+  <p>Réécrivez la demande avec les 5 composants, à partir de ces informations :</p>
+  <ul>
+    <li>Service <code>catalog-api</code>, Python 3.12, FastAPI servi par <code>uvicorn</code>, module <code>app.main:app</code>, port 8000.</li>
+    <li>Dépendances dans <code>requirements.txt</code>, code dans le dossier <code>app/</code>, santé sur <code>/health</code>.</li>
+    <li>Cible : Kubernetes. Exigences sécurité de l'entreprise : utilisateur non‑root, image minimale, pas de secret dans l'image.</li>
+  </ul>
+  <h3>Étape 3 — Comparer avec la grille (7 min)</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Critère</th><th>Prompt naïf</th><th>Prompt structuré</th></tr>
+    <tr><td>Image de base légère avec version précise (<code>python:3.12-slim</code>)</td><td>☐</td><td>☐</td></tr>
+    <tr><td>Build multi‑stage</td><td>☐</td><td>☐</td></tr>
+    <tr><td>Utilisateur non‑root (<code>USER</code>)</td><td>☐</td><td>☐</td></tr>
+    <tr><td><code>pip install --no-cache-dir</code></td><td>☐</td><td>☐</td></tr>
+    <tr><td>Ordre des <code>COPY</code> optimisé pour le cache (requirements avant le code)</td><td>☐</td><td>☐</td></tr>
+    <tr><td>Commande en forme exec (<code>CMD ["…"]</code>)</td><td>☐</td><td>☐</td></tr>
+    <tr><td>Aucun secret / variable sensible en dur</td><td>☐</td><td>☐</td></tr>
+    <tr><td>Proposition d'un <code>.dockerignore</code></td><td>☐</td><td>☐</td></tr>
+    <tr><td>Liste des hypothèses et points à vérifier</td><td>☐</td><td>☐</td></tr>
+  </table></div>
+  <details class="solution"><summary>Corrigé — exemple de prompt et de résultat attendu</summary>
+    <div class="prompt-box good">RÔLE : Tu es ingénieur DevOps spécialisé en conteneurs sécurisés.
+CONTEXTE : Service catalog-api, Python 3.12, FastAPI servi par uvicorn (module app.main:app), port 8000, dépendances dans requirements.txt, code dans app/, endpoint de santé /health. Déployé sur Kubernetes.
+TÂCHE : Écris le Dockerfile de production.
+CONTRAINTES :
+- image de base python:3.12-slim, build multi-stage
+- utilisateur non-root avec UID fixe
+- aucune donnée sensible dans l'image, pas de cache pip
+- couches optimisées pour le cache de build
+FORMAT : le Dockerfile, puis un .dockerignore. Commentaires brefs en français.
+AUTO-REVUE : termine par la liste de tes hypothèses et 3 points à vérifier.</div>
+    <pre><code><span class="c"># syntax=docker/dockerfile:1</span>
+<span class="k">FROM</span> python:3.12-slim AS builder
+<span class="k">WORKDIR</span> /app
+<span class="k">COPY</span> requirements.txt .
+<span class="k">RUN</span> pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+<span class="k">FROM</span> python:3.12-slim
+<span class="k">ENV</span> PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+<span class="k">RUN</span> useradd --create-home --uid 10001 appuser
+<span class="k">WORKDIR</span> /app
+<span class="k">COPY</span> --from=builder /install /usr/local
+<span class="k">COPY</span> --chown=10001:10001 app/ ./app
+<span class="k">USER</span> 10001
+<span class="k">EXPOSE</span> 8000
+<span class="k">CMD</span> ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]</code></pre>
+    <p><strong>Points de debrief :</strong> un <code>HEALTHCHECK</code> Docker est inutile sur Kubernetes (ce sont les probes du Deployment qui comptent) ; le tag de l'image de base peut être épinglé par digest pour une reproductibilité totale ; scanner l'image avec <code>trivy image</code> avant publication.</p>
+  </details>
+</section>
+
+<!-- ================= ATELIER 2 ================= -->
+<section class="slide" id="atelier-2">
+  <h2><span class="num">2</span>Générer puis durcir un déploiement Kubernetes <span class="duration">⏱ 25 min · M5</span></h2>
+  <p><strong>Objectif :</strong> pratiquer la boucle « générer → valider → durcir → documenter » et repérer les oublis par défaut de l'IA.</p>
+  <h3>Étape 1 — Génération naïve (3 min)</h3>
+  <div class="prompt-box bad">Écris un Deployment Kubernetes pour mon service catalog-api qui se connecte à PostgreSQL.</div>
+  <p>Résultat typique observé :</p>
+  <pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: catalog-api }
+  template:
+    metadata:
+      labels: { app: catalog-api }
+    spec:
+      containers:
+        - name: catalog-api
+          image: catalog-api:latest
+          ports: [{ containerPort: 8000 }]
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://admin:SuperSecret@postgres:5432/catalog"</code></pre>
+  <h3>Étape 2 — Revue avec la checklist (7 min)</h3>
+  <p>Relevez tous les problèmes. Puis demandez à l'IA : <em>« Agis comme un auditeur sécurité Kubernetes et liste tous les problèmes de ce manifest, classés par gravité. »</em> A‑t‑elle trouvé les mêmes que vous ?</p>
+  <div class="grid two">
+    <div class="card"><ul>
+      <li>☐ Tag d'image immuable (pas <code>latest</code>), registry explicite</li>
+      <li>☐ Namespace explicite</li>
+      <li>☐ Plusieurs réplicas, stratégie de rolling update</li>
+      <li>☐ <code>readinessProbe</code> et <code>livenessProbe</code> sur <code>/health</code></li>
+      <li>☐ <code>requests</code> / <code>limits</code></li>
+    </ul></div>
+    <div class="card"><ul>
+      <li>☐ Secret externalisé (<code>secretKeyRef</code>)</li>
+      <li>☐ <code>runAsNonRoot</code>, <code>allowPrivilegeEscalation: false</code></li>
+      <li>☐ <code>capabilities.drop: [ALL]</code>, FS racine en lecture seule</li>
+      <li>☐ Labels standard <code>app.kubernetes.io/*</code></li>
+      <li>☐ <code>automountServiceAccountToken: false</code> si inutile</li>
+    </ul></div>
+  </div>
+  <h3>Étape 3 — Durcissement (10 min)</h3>
+  <p>Rédigez un prompt R‑C‑C‑F‑A qui intègre les points de la checklist, puis faites durcir le manifest. Si vous avez un cluster ou <code>kubeconform</code> :</p>
+  <pre><code>kubectl apply --dry-run=server -f deployment.yaml
+kubeconform -strict -summary deployment.yaml</code></pre>
+  <h3>Étape 4 — Note de revue (5 min)</h3>
+  <p>Rédigez 5 lignes : ce que l'IA a oublié, ce qu'elle a bien fait, ce que vous ajouteriez dans le <code>AGENTS.md</code> de l'équipe pour ne plus avoir à le corriger.</p>
+  <details class="solution"><summary>Corrigé — manifest durci</summary>
+    <pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-api
+  namespace: bookshelf
+  labels:
+    app.kubernetes.io/name: catalog-api
+    app.kubernetes.io/part-of: bookshelf
+    app.kubernetes.io/version: "2.4.0"
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: catalog-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: catalog-api
+        app.kubernetes.io/part-of: bookshelf
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: catalog-api
+          image: registry.example.com/bookshelf/catalog-api:2.4.0
+          ports:
+            - { name: http, containerPort: 8000 }
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef: { name: catalog-db, key: url }
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { memory: 256Mi }
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - { name: tmp, emptyDir: {} }</code></pre>
+    <p><strong>Points de debrief :</strong></p>
+    <ul>
+      <li>Le mot de passe en clair du manifest initial doit être considéré comme <strong>compromis</strong> s'il a été commité : rotation obligatoire.</li>
+      <li>Limite CPU volontairement absente (évite le throttling) : choix à débattre et à documenter selon la politique de l'équipe.</li>
+      <li>La liveness probe ne doit pas dépendre de la base de données, sinon une panne de base redémarre tous les pods en boucle.</li>
+      <li>Règle à ajouter dans <code>AGENTS.md</code> : « Tout Deployment inclut probes, requests/limits, securityContext restrictif, secrets via secretKeyRef, image taguée. »</li>
+    </ul>
+  </details>
+</section>
+
+<!-- ================= ATELIER 3 ================= -->
+<section class="slide" id="atelier-3">
+  <h2><span class="num">3</span>Script legacy &amp; pipeline en échec <span class="duration">⏱ 20 min · M5</span></h2>
+  <h3>Partie A — Refactorer un script de sauvegarde (12 min)</h3>
+  <p>Ce script tourne en cron depuis des années. Il « marche ».</p>
+  <pre><code>#!/bin/bash
+DB=$1
+DATE=`date +%Y%m%d`
+cd /backup
+pg_dump -h db.internal -U admin -W secret123 $DB > $DB-$DATE.sql
+gzip $DB-$DATE.sql
+find /backup -mtime +7 -exec rm {} \;
+aws s3 cp $DB-$DATE.sql.gz s3://bookshelf-backups/
+echo "Backup OK"</code></pre>
+  <ol>
+    <li>Demandez d'abord à l'IA d'<strong>expliquer</strong> le script et de lister les risques, <strong>sans le modifier</strong>.</li>
+    <li>Comparez avec votre propre analyse. L'IA a‑t‑elle vu le problème de l'option <code>-W</code> ?</li>
+    <li>Demandez un refactoring : comportement identique, <code>set -euo pipefail</code>, quoting, logs sur stderr, mode <code>--dry-run</code>, aucun secret en dur.</li>
+    <li>Si possible : <code>shellcheck backup.sh</code>.</li>
+  </ol>
+  <details class="solution"><summary>Corrigé — problèmes et version refactorisée</summary>
+    <div class="table-wrap"><table>
+      <tr><th>Problème</th><th>Conséquence</th></tr>
+      <tr><td>Mot de passe en dur… et mal utilisé : <code>-W</code> force une invite de mot de passe et ne prend pas d'argument ; <code>secret123</code> est interprété comme nom de base</td><td>Secret exposé dans Git et dans <code>ps</code> ; comportement imprévisible</td></tr>
+      <tr><td>Aucune gestion d'erreur</td><td>Si <code>pg_dump</code> échoue, un fichier vide est envoyé et « Backup OK » est affiché</td></tr>
+      <tr><td><code>cd /backup</code> non vérifié</td><td>Le dump est écrit dans le répertoire courant</td></tr>
+      <tr><td><code>find … -exec rm</code> sans filtre</td><td>Supprime <strong>tous</strong> les fichiers de plus de 7 jours dans <code>/backup</code></td></tr>
+      <tr><td>Variables non quotées, pas de contrôle de <code>$1</code></td><td>Nom vide ou avec espaces → comportements dangereux</td></tr>
+      <tr><td>Purge avant l'envoi S3</td><td>En cas d'échec d'envoi, on perd la seule copie locale ancienne</td></tr>
+    </table></div>
+    <pre><code>#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+DB="${1:?usage: $0 &lt;database&gt; [--dry-run]}"
+DRY_RUN="${2:-}"
+BACKUP_DIR="${BACKUP_DIR:-/backup}"
+BUCKET="${BUCKET:-s3://bookshelf-backups}"
+RETENTION_DAYS="${RETENTION_DAYS:-7}"
+FILE="${BACKUP_DIR}/${DB}-$(date +%Y%m%d-%H%M%S).sql.gz"
+
+<span class="c"># Le mot de passe vient de ~/.pgpass ou de PGPASSWORD injecté par le secret manager</span>
+export PGHOST="${PGHOST:-db.internal}" PGUSER="${PGUSER:-backup_ro}"
+
+log() { printf '%s [%s] %s\n' "$(date -Iseconds)" "$1" "$2" &gt;&amp;2; }
+run() { if [[ "$DRY_RUN" == "--dry-run" ]]; then log DRY "$*"; else "$@"; fi; }
+trap 'rm -f "${FILE}.partial"' EXIT
+
+log INFO "Sauvegarde de ${DB} vers ${FILE}"
+if [[ "$DRY_RUN" != "--dry-run" ]]; then
+  pg_dump "$DB" | gzip &gt; "${FILE}.partial"
+  mv "${FILE}.partial" "$FILE"
+fi
+run aws s3 cp "$FILE" "${BUCKET}/"
+run find "$BACKUP_DIR" -maxdepth 1 -name "${DB}-*.sql.gz" -mtime "+${RETENTION_DAYS}" -delete
+log INFO "Sauvegarde terminée"</code></pre>
+  </details>
+
+  <h3>Partie B — Expliquer un job CI en échec (8 min)</h3>
+  <p>Le dernier commit ajoutait une dépendance « suggérée par l'assistant » pour simplifier la pagination. Le build échoue :</p>
+  <pre><code>#8 [builder 4/5] RUN pip install --no-cache-dir -r requirements.txt
+#8 2.913 ERROR: Could not find a version that satisfies the requirement fastapi-paginate-plus==0.4.2 (from versions: none)
+#8 2.914 ERROR: No matching distribution found for fastapi-paginate-plus==0.4.2
+#8 ERROR: process "/bin/sh -c pip install --no-cache-dir -r requirements.txt" did not complete successfully: exit code: 1
+Error: Process completed with exit code 1.</code></pre>
+  <p>Utilisez le prompt d'analyse d'échec du <a href="05-cas-usages-cycle-devops.html">module 5</a>. Quelle est la cause ? Quelle est la <strong>mauvaise</strong> correction à éviter ?</p>
+  <details class="solution"><summary>Corrigé</summary>
+    <ul>
+      <li><strong>Cause :</strong> « from versions: none » indique que le paquet <strong>n'existe pas</strong> sur PyPI : c'est une dépendance <strong>hallucinée</strong> par l'assistant.</li>
+      <li><strong>Mauvaise correction :</strong> retirer la version, chercher un nom approchant ou installer le premier paquet au nom similaire trouvé. C'est exactement le scénario du <em>slopsquatting</em> : un attaquant peut avoir publié un paquet malveillant sous ce nom.</li>
+      <li><strong>Bonne correction :</strong> supprimer la dépendance, utiliser une bibliothèque vérifiée (existence, mainteneurs, popularité, licence) ou coder la fonctionnalité.</li>
+      <li><strong>Capitalisation :</strong> rule « Toute nouvelle dépendance proposée par l'IA est vérifiée sur le registre officiel avant ajout » + gate de politique de dépendances (liste autorisée, scan SCA).</li>
+    </ul>
+  </details>
+</section>
+
+<!-- ================= ATELIER 4 ================= -->
+<section class="slide" id="atelier-4">
+  <h2><span class="num">4</span>Diagnostiquer un incident avec l'IA <span class="duration">⏱ 30 min · M6</span></h2>
+  <p><strong>Objectif :</strong> appliquer la méthode Hypothèse → Preuve → Correctif, choisir une mitigation, rédiger un post‑mortem et capitaliser.</p>
+  <h3>Le dossier d'incident</h3>
+  <div class="grid two">
+    <div class="card"><h4>🚨 Alerte</h4><p><code>CatalogHighErrorRate</code> — firing depuis 14:06<br>Ratio 5xx de <code>catalog-api</code> : <strong>34 %</strong> (seuil 5 %)</p></div>
+    <div class="card"><h4>🕐 Changements récents</h4><ul>
+      <li>13:55 — Argo CD sync <code>catalog-api</code> v2.4.0. Changelog : « cache des recommandations ; pool DB porté de 5 à 50 connexions par pod pour la perf ».</li>
+      <li>14:00 — début d'une opération promotionnelle ; le HPA passe <code>catalog-api</code> de 3 à 8 réplicas.</li>
+    </ul></div>
+  </div>
+  <pre><code><span class="c"># logs catalog-api (extrait)</span>
+14:01:48 INFO  GET /books?page=2 200 41ms
+14:02:11 ERROR sqlalchemy.pool QueuePool limit of size 50 overflow 10 reached, connection timed out, timeout 30.00
+14:02:41 ERROR psycopg.OperationalError: connection failed: FATAL: sorry, too many clients already
+14:03:05 WARN  GET /books/123 500 30012ms
+<span class="c"># logs orders-api (extrait)</span>
+14:04:20 ERROR HikariPool-1 - Connection is not available, request timed out after 30000ms
+14:04:21 ERROR org.postgresql.util.PSQLException: FATAL: sorry, too many clients already
+
+<span class="c"># métriques</span>
+pg_stat_activity_count{db="bookshelf"}      = 100   (depuis 14:01)
+pg_settings_max_connections                  = 100
+node_cpu_usage{instance="postgres-0"}        = 35 %
+kube_deployment_status_replicas{catalog-api} = 8
+http_requests_total rate (catalog-api)       = x2,1 vs veille
+
+<span class="c"># events Kubernetes</span>
+14:03:30 Warning Unhealthy pod/catalog-api-7d9f…  Readiness probe failed: HTTP 503
+(aucun OOMKilled, aucun redémarrage de nœud)</code></pre>
+  <h3>Consignes</h3>
+  <ol>
+    <li><strong>Diagnostic (10 min)</strong> — Utilisez le prompt H‑P‑C du module 6 avec ce dossier. Pour chaque hypothèse de l'IA, exigez la preuve.</li>
+    <li><strong>Piège (2 min)</strong> — Relancez en orientant : <em>« Je pense que c'est la promo qui a saturé le CPU, tu confirmes ? »</em>. L'IA résiste‑t‑elle à la complaisance ?</li>
+    <li><strong>Mitigation (5 min)</strong> — Choisissez une action, dites si elle est réversible et qui doit la valider.</li>
+    <li><strong>Post‑mortem (8 min)</strong> — Faites rédiger le premier jet (prompt du module 6), puis corrigez les <code>[À VÉRIFIER]</code>.</li>
+    <li><strong>Capitalisation (5 min)</strong> — Proposez 1 alerte, 1 rule pour <code>AGENTS.md</code>, 1 mise à jour de runbook.</li>
+  </ol>
+  <details class="solution"><summary>Corrigé</summary>
+    <p><strong>Cause racine :</strong> la v2.4.0 porte le pool à 50 connexions (+10 en débordement) <strong>par pod</strong>. Avec 8 réplicas, l'application peut ouvrir jusqu'à 8 × 60 = 480 connexions, alors que PostgreSQL est limité à <code>max_connections = 100</code>. La base partagée est saturée → <code>catalog-api</code> <strong>et</strong> <code>orders-api</code> échouent (corrélation : une seule cause, deux services impactés).</p>
+    <p><strong>Preuves :</strong> « too many clients already » dans les deux services ; <code>pg_stat_activity_count = max_connections = 100</code> depuis 14:01 ; changement de pool dans le changelog à 13:55.</p>
+    <p><strong>Fausses pistes :</strong> la promo est un <em>facteur contributif</em> (elle a déclenché le scale‑out), pas la cause ; le CPU de la base (35 %) et l'absence d'OOM écartent une saturation de ressources.</p>
+    <p><strong>Mitigation recommandée :</strong> rollback de la v2.4.0 par <code>git revert</code> sur le dépôt GitOps (réversible, tracé, validé par l'astreinte). Réduire les réplicas à la main serait contrecarré par le HPA et dégraderait le service pendant la promo.</p>
+    <p><strong>Capitalisation :</strong></p>
+    <ul>
+      <li><strong>Alerte</strong> : <code>pg_stat_activity_count / pg_settings_max_connections &gt; 0.8</code> pendant 2 min.</li>
+      <li><strong>Rule</strong> : « Tout changement de taille de pool doit expliciter le calcul : (pool + overflow) × réplicas max (HPA) × services partageant la base ≤ max_connections − marge. »</li>
+      <li><strong>Action de fond</strong> : un pooler (PgBouncer) devant la base partagée ; test de charge avec le HPA au maximum dans la pipeline de pré‑production.</li>
+      <li><strong>Runbook</strong> : section « Erreurs too many clients » avec les requêtes de vérification.</li>
+    </ul>
+  </details>
+</section>
+
+<!-- ================= ATELIER 5 ================= -->
+<section class="slide" id="atelier-5">
+  <h2><span class="num">5</span>Autorisé, à anonymiser ou interdit ? <span class="duration">⏱ 10 min · M7</span></h2>
+  <p>Pour chaque scénario, décidez : 🟢 <strong>autorisé</strong>, 🟠 <strong>autorisé sous conditions</strong> (anonymiser, outil maîtrisé, validation) ou 🔴 <strong>interdit</strong>. Justifiez avec le risque correspondant.</p>
+  <div class="table-wrap"><table>
+    <tr><th>#</th><th>Scénario</th><th>Votre décision</th></tr>
+    <tr><td>1</td><td>Demander à ChatGPT grand public l'explication d'un message d'erreur Terraform générique.</td><td></td></tr>
+    <tr><td>2</td><td>Coller le kubeconfig admin de prod dans l'assistant pour qu'il « debug plus vite ».</td><td></td></tr>
+    <tr><td>3</td><td>Envoyer 2 000 lignes de logs nginx de prod (avec IP clients) dans un chat grand public.</td><td></td></tr>
+    <tr><td>4</td><td>Générer un chart Helm pour un service interne avec l'assistant IDE sous licence entreprise.</td><td></td></tr>
+    <tr><td>5</td><td>Laisser un agent CLI exécuter <code>kubectl</code> en production sans validation, « pour gagner du temps ».</td><td></td></tr>
+    <tr><td>6</td><td>Faire résumer un post‑mortem contenant des noms de clients pour le comité de direction.</td><td></td></tr>
+    <tr><td>7</td><td>Installer un serveur MCP Kubernetes trouvé sur un dépôt GitHub inconnu (3 étoiles).</td><td></td></tr>
+    <tr><td>8</td><td>Utiliser l'IA pour présélectionner automatiquement les CV des candidats SRE.</td><td></td></tr>
+  </table></div>
+  <details class="solution"><summary>Corrigé</summary>
+    <div class="table-wrap"><table>
+      <tr><th>#</th><th>Décision</th><th>Justification</th></tr>
+      <tr><td>1</td><td>🟢</td><td>Donnée publique, aucune information interne.</td></tr>
+      <tr><td>2</td><td>🔴</td><td>Secret critique : jamais dans un prompt, quel que soit l'outil. Rotation si c'est arrivé.</td></tr>
+      <tr><td>3</td><td>🔴 tel quel / 🟠</td><td>Données personnelles (RGPD) vers un outil non contractualisé. Possible après anonymisation et dans un outil entreprise ou maîtrisé — et en filtrant les lignes pertinentes.</td></tr>
+      <tr><td>4</td><td>🟢</td><td>Donnée interne, outil contractualisé. Le chart reste soumis aux gates et à la revue.</td></tr>
+      <tr><td>5</td><td>🔴</td><td>Autonomie excessive (OWASP) : moindre privilège, dry‑run et validation humaine obligatoires.</td></tr>
+      <tr><td>6</td><td>🟠</td><td>Anonymiser les noms de clients ou utiliser un outil maîtrisé ; relecture humaine du résumé.</td></tr>
+      <tr><td>7</td><td>🔴 sans revue</td><td>Risque de chaîne d'approvisionnement : le serveur s'exécute avec vos droits. Revue de code, source fiable, version épinglée.</td></tr>
+      <tr><td>8</td><td>🔴 (hors processus de conformité)</td><td>Usage <strong>à haut risque</strong> selon l'AI Act (emploi, annexe III) : obligations strictes, risque de biais et de discrimination. Nécessite DPO, juridique, RH.</td></tr>
+    </table></div>
+  </details>
+</section>
+
+<!-- ================= ATELIER 6 ================= -->
+<section class="slide" id="atelier-6">
+  <h2><span class="num">6</span>Mettre en place l'IA dans une stratégie DevOps <span class="duration">⏱ 45 min · Synthèse M1→M7</span></h2>
+  <p><strong>Objectif :</strong> produire, en binôme, un <strong>plan d'adoption de l'IA pour votre équipe</strong> : cas d'usage priorisés, garde-fous, outils, coûts et indicateurs. C'est l'atelier de synthèse : il mobilise tous les modules de la journée et aboutit à un livrable emporté.</p>
+  <div class="callout warn"><span class="t">Rôle-play</span>Un binôme joue l'équipe (dev, ops, lead), l'autre joue la direction : elle demandera « combien ça coûte, quels risques, quand les résultats ? ». Préparez-vous à répondre en 3 minutes.</div>
+
+  <h3>Étape 1 — Inventaire &amp; cadrage (10 min)</h3>
+  <p>À partir de votre réalité (ou du fil rouge BookShelf), répondez par écrit :</p>
+  <ul>
+    <li>Quelles tâches de votre cycle DevOps sont <strong>répétitives, bien délimitées, à faible risque</strong> ? (candidates idéales pour l'IA)</li>
+    <li>Quelles tâches sont <strong>à fort risque</strong> (prod, secrets, données personnelles) et resteront humaines ?</li>
+    <li>Quel <strong>mode de déploiement</strong> de l'IA est adapté à la sensibilité de vos données ? (outil grand public interdit, SaaS entreprise, instance interne)</li>
+  </ul>
+  <p>Utilisez un prompt C-C-C-F-A pour faire challenger votre liste par l'IA : <em>« Voici ma liste de cas d'usage candidats. Liste ce que j'ai oublié, signale ceux qui sont mal délimités, propose un ordre de priorité selon le ratio impact / risque. »</em></p>
+
+  <h3>Étape 2 — Choisir 3 cas d'usage pilotes (8 min)</h3>
+  <p>Sélectionnez <strong>3 cas d'usage pilotes</strong> couvrant des étapes différentes du cycle. Pour chacun, remplissez la fiche :</p>
+  <div class="table-wrap"><table>
+    <tr><th>Champ</th><th>Cas 1</th><th>Cas 2</th><th>Cas 3</th></tr>
+    <tr><td>Cas d'usage (ex. revue de code assistée)</td><td></td><td></td><td></td></tr>
+    <tr><td>Module de la journée mobilisé</td><td></td><td></td><td></td></tr>
+    <tr><td>Gain attendu (temps, qualité, fiabilité)</td><td></td><td></td><td></td></tr>
+    <tr><td>Risques principaux (hallucination, secret, RGPD, coût)</td><td></td><td></td><td></td></tr>
+    <tr><td>Garde-fous (dry-run, revue humaine, scan bloquant, RBAC lecture seule)</td><td></td><td></td><td></td></tr>
+    <tr><td>Outil / mode de déploiement</td><td></td><td></td><td></td></tr>
+    <tr><td>Métrique de succès (avant / après)</td><td></td><td></td><td></td></tr>
+  </table></div>
+
+  <h3>Étape 3 — Le cadre de gouvernance (12 min)</h3>
+  <p>Rédigez le squelette de votre <strong>policy IA d'équipe</strong> (1 page), en vous appuyant sur les principes de la journée :</p>
+  <ol>
+    <li><strong>Le principe directeur</strong> : « L'IA propose → les contrôles automatiques tranchent → l'humain décide ». Traduisez-le en 3 règles concrètes.</li>
+    <li><strong>Les données</strong> : une liste rouge (ce qui ne va JAMAIS dans un prompt) et une liste verte (ce qui est autorisé, avec quel outil).</li>
+    <li><strong>Les gates</strong> : où placer les contrôles bloquants dans la pipeline (scans, tests, revue) pour que ce que l'IA génère ne passe jamais sans vérification ?</li>
+    <li><strong>Les agents</strong> : quel périmètre d'action pour un agent CLI/MCP (lecture seule, dry-run, validation humaine des actions à effet de bord) ?</li>
+    <li><strong>La capitalisation</strong> : où vivent les prompts et rules validés (<code>rules/</code>, <code>AGENTS.md</code>) et qui les fait évoluer ?</li>
+    <li><strong>Les coûts</strong> : quel budget, quel suivi (tokens, abonnements), quel seuil d'alerte (esprit FinOps : warning 80 %, critique 100 %) ?</li>
+  </ol>
+  <p>Faites relire le squelette par l'IA avec ce prompt :</p>
+  <div class="prompt-box good">RÔLE : Tu es RSSI et responsable conformité (RGPD / AI Act).
+CONTEXTE : Voici la policy IA d'une équipe DevOps (collée ci-dessous).
+TÂCHE : Relis-la et liste, classés par gravité : les trous de sécurité, les zones de non-conformité RGPD/AI Act, les règles invérifiables en pratique.
+CONTRAINTE : pas de généralités — chaque point cité renvoie à la règle exacte de la policy.
+FORMAT : tableau Gravité / Problème / Règle concernée / Correction proposée.
+AUTO-REVUE : signale les points où tu manques d'information pour trancher.</div>
+
+  <h3>Étape 4 — Roadmap 30/60/90 jours (10 min)</h3>
+  <div class="grid">
+    <div class="card"><h4>📅 J + 30 — Prouver</h4><ul><li>Lancer les 3 pilotes sur un périmètre sans risque</li><li>Mesurer la métrique de succès (avant/après)</li><li>Publier la policy IA v1 et la liste rouge</li></ul></div>
+    <div class="card"><h4>📅 J + 60 — Industrialiser</h4><ul><li>Intégrer les gates dans la pipeline réelle</li><li>Capitaliser : 5 prompts/rules validés dans <code>AGENTS.md</code></li><li>Former le reste de l'équipe (1 h, sur vos propres exemples)</li></ul></div>
+    <div class="card"><h4>📅 J + 90 — Étendre &amp; mesurer</h4><ul><li>Étendre aux cas d'usage suivants si les pilotes tiennent leurs métriques</li><li>Revue FinOps : coût réel vs budget</li><li>Rétro : que faut-il arrêter, ajuster, généraliser ?</li></ul></div>
+  </div>
+  <p>Pour chaque étape : nommez <strong>un responsable</strong> et <strong>une métrique</strong>. Un plan sans mesure n'est pas un plan.</p>
+
+  <h3>Étape 5 — Pitch à la direction (5 min)</h3>
+  <p>Chaque binôme présente son plan en <strong>3 minutes chrono</strong> : 3 pilotes, 3 garde-fous, 1 budget, 1 métrique, 1 risque principal et sa mitigation. La « direction » challenge : coût, conformité, dépendance au fournisseur, effet sur les compétences de l'équipe.</p>
+
+  <details class="solution"><summary>Corrigé — grille d'évaluation et pièges classiques</summary>
+    <p><strong>Grille d'évaluation d'un bon plan (à afficher en debrief) :</strong></p>
+    <ul>
+      <li>Les 3 pilotes sont <em>réalistes</em> (bien délimités, mesurables) et couvrent des étapes différentes du cycle.</li>
+      <li>Chaque cas d'usage a un garde-fou <em>automatique</em> (gate, scan, dry-run), pas seulement une consigne « faites attention ».</li>
+      <li>La liste rouge est <em>opérable</em> : vérifiable dans les logs de l'outil, pas seulement dans un slide.</li>
+      <li>Les métriques ont une valeur « avant » mesurée <em>avant</em> de lancer les pilotes.</li>
+      <li>Le plan mentionne explicitement ce qui reste humain (décision prod, actions à effet de bord, revue finale).</li>
+    </ul>
+    <p><strong>Pièges classiques à challenger :</strong></p>
+    <div class="table-wrap"><table>
+      <tr><th>Piège</th><th>Contre-mesure</th></tr>
+      <tr><td>« On met l'IA partout » — aucun cas d'usage priorisé</td><td>Forcer le top 3 avec ratio impact/risque ; le reste va en backlog</td></tr>
+      <tr><td>Garde-fous = « les devs vérifieront »</td><td>Remplacer chaque « vérification humaine » par un contrôle automatique chaque fois que possible ; l'humain décide, le contrôle tranche</td></tr>
+      <tr><td>Un seul outil, un seul fournisseur, sans plan B</td><td>Prévoir la substituabilité (APIs standards, MCP, modèles interchangeables) et le coût de sortie</td></tr>
+      <tr><td>Aucune métrique « avant »</td><td>Bloquer l'étape pilote tant que la baseline n'est pas mesurée</td></tr>
+      <tr><td>La policy IA est un document mort</td><td>La traduire en rules/AGENTS.md versionnés dans Git, revus comme du code</td></tr>
+      <tr><td>Coût oublié (tokens, abonnements, GPU)</td><td>Budget + suivi FinOps IA dès J+30</td></tr>
+    </table></div>
+    <p><strong>Exemple de livrable complet (fil rouge BookShelf) :</strong> pilotes = revue de code assistée sur <code>catalog-api</code>, génération IaC Terraform durcie (bucket S3, eu-west-3), RAG sur les runbooks PostgreSQL. Garde-fous = scans bloquants dans la CI, RBAC lecture seule pour l'agent MCP, liste rouge (secrets, logs clients, données personnelles). Métriques = temps de revue par MR, taux de rejet en prod, MTTR sur incidents base de données. Budget = abonnement entreprise + suivi tokens mensuels, alerte à 80 %.</p>
+  </details>
+  <div class="trainer">C'est l'atelier le plus long : gardez le timing strict (le chrono du pitch crée l'émulation). Si le groupe est en avance, ajoutez une passe « revue croisée » : chaque binôme évalue le plan d'un autre avec la grille du corrigé. Si vous êtes en retard, l'étape 2 (fiches) peut être réduite à 2 cas d'usage ; ne coupez jamais l'étape 5, c'est celle qui ancre le message de la journée.</div>
+  <nav class="pager">
+    <a href="#atelier-5"><small>← Précédent</small>Atelier 5</a>
+    <a class="next" href="quiz-final.html"><small>Pour finir →</small>Quiz final</a>
+  </nav>
+</section>
+
+</main>
+<footer class="foot">Formation IA &amp; DevOps — Ateliers</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

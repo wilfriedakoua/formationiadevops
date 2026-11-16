@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M5 · Cas d'usage de l'IA dans le cycle DevOps — Formation IA &amp; DevOps</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">IA &amp; DevOps · 1 jour</a>
+  <a href="01-introduction-ia.html">M1</a><a href="02-fondamentaux-devops.html">M2</a><a href="03-ia-dans-le-devops.html">M3</a><a href="04-bases-du-prompting.html">M4</a><a href="05-cas-usages-cycle-devops.html">M5</a><a href="06-monitoring-incidentologie.html">M6</a><a href="07-outils-ethique-tendances.html">M7</a><a href="ateliers.html">Ateliers</a><a href="quiz-final.html">Quiz</a>
+  <span class="spacer"></span>
+  <button data-action="notes">Notes (N)</button>
+  <button data-action="present">Présenter (P)</button>
+</header>
+
+<div class="hero"><div class="inner">
+  <div class="kicker">Module 5 · 13:30 – 15:00 · 45 min + ateliers 45 min</div>
+  <h1>Cas d'usage de l'IA dans le cycle DevOps</h1>
+  <p>Étape par étape, de la user story au déploiement : ce que l'IA fait bien, ce qu'elle oublie, et le contrôle à garder à chaque fois.</p>
+</div></div>
+
+<main>
+
+<section class="slide">
+  <div class="objectives">
+    <h3>🎯 Objectifs du module</h3>
+    <ul>
+      <li>Identifier des cas d'usage concrets à chaque étape de la boucle DevOps.</li>
+      <li>Appliquer la <strong>boucle de production assistée</strong> : générer → valider → durcir → commiter.</li>
+      <li>Connaître les <strong>oublis typiques</strong> de l'IA sur Kubernetes, Terraform, Bash et CI/CD.</li>
+      <li>Concevoir une <strong>pipeline augmentée</strong> où l'IA assiste sans décider.</li>
+    </ul>
+  </div>
+  <div class="trainer">Reprendre les usages notés au tableau en début de M1 et les placer sur la boucle DevOps au fur et à mesure.</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">1</span>La boucle de production assistée</h2>
+  <p>On ne commite <strong>jamais</strong> la sortie brute d'un assistant. Elle passe par une boucle :</p>
+  <div class="mermaid">
+stateDiagram-v2
+  direction LR
+  [*] --> Prompt
+  Prompt --> Generation : prompt structuré
+  Generation --> Validation : sortie brute
+  Validation --> Revue : lint, dry-run, tests, scans OK
+  Validation --> Prompt : erreurs
+  Revue --> Durcissement : oublis détectés
+  Durcissement --> Validation
+  Revue --> Commit : critères OK
+  Commit --> [*]
+  </div>
+  <div class="callout key"><span class="t">Règle d'or</span>La sortie IA est une <strong>proposition</strong>. Le livrable, c'est la proposition <strong>validée, relue et durcie</strong>. Générer donne la forme ; durcir la rend sûre.</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">2</span>Vue d'ensemble : un cas d'usage par étape</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Étape</th><th>Cas d'usage IA</th><th>Contrôle à garder</th></tr>
+    <tr><td>📋 <strong>Plan</strong></td><td>Rédiger user stories &amp; critères d'acceptation, découper une epic, rédiger un ADR, lister les risques.</td><td>Validation par le PO / l'architecte.</td></tr>
+    <tr><td>💻 <strong>Code</strong></td><td>Complétion, explication de code hérité, refactoring, migration de version, génération de tests.</td><td>Tests, revue de code, couverture.</td></tr>
+    <tr><td>🏗️ <strong>IaC</strong></td><td>Générer Terraform, Ansible, manifests K8s, charts Helm ; convertir entre formats.</td><td><code>validate</code>, <code>plan</code>, <code>--dry-run</code>, tfsec/Trivy config, Checkov.</td></tr>
+    <tr><td>🔨 <strong>Build / CI</strong></td><td>Écrire une pipeline, migrer Jenkins → GitLab CI / GitHub Actions, <strong>expliquer un job en échec</strong>.</td><td>Exécution réelle de la pipeline.</td></tr>
+    <tr><td>🛡️ <strong>Sécurité</strong></td><td>Résumer un rapport de scan, prioriser des CVE, revue de PR orientée sécurité, threat modeling.</td><td>Scanners bloquants (Trivy, Gitleaks, SAST) + décision humaine sur les exceptions.</td></tr>
+    <tr><td>🚀 <strong>Release / Deploy</strong></td><td>Notes de version, changelog, valeurs Helm par environnement, PR GitOps.</td><td>Approbation de la PR, Argo CD sync, rollback Git.</td></tr>
+    <tr><td>⚙️ <strong>Operate / Monitor</strong></td><td>Requêtes PromQL/LogQL, runbooks, diagnostic, post‑mortem (→ M6).</td><td>Preuves dans les signaux, validation humaine des actions.</td></tr>
+    <tr><td>📝 <strong>Documentation</strong></td><td>README, schémas Mermaid depuis le code, onboarding, FAQ interne.</td><td>Relecture par un pair.</td></tr>
+  </table></div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">3</span>Plan &amp; Code</h2>
+  <div class="grid two">
+    <div class="card"><h4>📋 Transformer un besoin en user stories</h4>
+      <div class="prompt-box">Tu es Product Owner technique. À partir du besoin ci-dessous, rédige 3 à 5 user stories au format « En tant que… je veux… afin de… », chacune avec 3 critères d'acceptation Gherkin (Given/When/Then). Signale les ambiguïtés du besoin.
+&lt;besoin&gt;Les clients doivent être prévenus quand un livre de leur liste de souhaits revient en stock.&lt;/besoin&gt;</div>
+    </div>
+    <div class="card"><h4>🧓 Comprendre et refactorer du code hérité</h4>
+      <div class="prompt-box">Explique ce script Bash ligne par ligne pour un nouvel arrivant, puis liste les risques (gestion d'erreurs, quoting, idempotence). Ne modifie rien pour l'instant.
+```bash
+[script]
+```</div>
+      <p>Puis, dans un 2<sup>e</sup> prompt : <em>« Refactorise en gardant le comportement identique, ajoute <code>set -euo pipefail</code>, des messages d'erreur sur stderr et un mode <code>--dry-run</code>. »</em></p>
+    </div>
+    <div class="card"><h4>🧪 Générer des tests</h4><p>Demander des tests <strong>des cas limites</strong> (entrées vides, erreurs réseau, valeurs extrêmes), pas seulement le cas nominal. Vérifier que les tests <strong>échouent</strong> quand on casse le code (sinon ils ne testent rien).</p></div>
+    <div class="card"><h4>🔄 Migrer une version</h4><p>Java 11 → 21, Python 3.8 → 3.12, API Kubernetes dépréciées : l'IA liste les changements cassants et propose les modifications. <strong>Toujours confronter à la doc officielle</strong> de migration.</p></div>
+  </div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">4</span>IaC &amp; Kubernetes : ce que l'IA oublie par défaut</h2>
+  <p>L'IA optimise « ça démarre », pas « ça tient en production sous incident ». À connaître pour l'exiger dans le prompt et le vérifier en revue :</p>
+  <div class="table-wrap"><table>
+    <tr><th>Techno</th><th>Généré par défaut</th><th>À exiger</th><th>Risque si oublié</th></tr>
+    <tr><td rowspan="5"><strong>Kubernetes</strong></td><td><code>image: app:latest</code></td><td>Tag immuable (version ou SHA)</td><td>Pas de reproductibilité ni de rollback fiable</td></tr>
+    <tr><td>Pas de probes</td><td><code>readinessProbe</code>, <code>livenessProbe</code></td><td>Trafic envoyé à un pod non prêt</td></tr>
+    <tr><td>Pas de ressources</td><td><code>requests</code> / <code>limits</code></td><td>Nœud saturé, OOMKill, voisins bruyants</td></tr>
+    <tr><td>Secret dans <code>env</code></td><td><code>secretKeyRef</code></td><td>Secret commité dans Git</td></tr>
+    <tr><td>Pas de <code>securityContext</code></td><td><code>runAsNonRoot</code>, <code>drop: [ALL]</code>, FS en lecture seule</td><td>Conteneur root, surface d'attaque</td></tr>
+    <tr><td rowspan="2"><strong>Terraform</strong></td><td>Syntaxe de provider ancienne (ex. blocs S3 inline)</td><td>Version de provider explicite</td><td>Code déprécié, erreurs au <code>plan</code></td></tr>
+    <tr><td>Pas de chiffrement / accès public ouvert</td><td>Chiffrement, blocage public, tags</td><td>Fuite de données</td></tr>
+    <tr><td><strong>Bash</strong></td><td>Pas de gestion d'erreurs</td><td><code>set -euo pipefail</code>, quoting, <code>${1:?usage}</code></td><td>Le script continue sur un état cassé</td></tr>
+    <tr><td><strong>CI/CD</strong></td><td>Étapes linéaires, scans non bloquants</td><td>Scans en <code>--exit-code 1</code>, dépendances <code>needs</code></td><td>Image vulnérable publiée</td></tr>
+  </table></div>
+  <h3>Les contrôles à lancer systématiquement</h3>
+  <pre><code>kubectl apply --dry-run=server -f k8s/        <span class="c"># validation par l'API server (admission incluse)</span>
+kubeconform -strict k8s/                       <span class="c"># validation de schéma hors cluster</span>
+terraform fmt -check &amp;&amp; terraform validate    <span class="c"># syntaxe + cohérence</span>
+terraform plan                                 <span class="c"># ce qui va VRAIMENT changer</span>
+trivy config .                                 <span class="c"># mauvaises configurations IaC</span>
+shellcheck scripts/*.sh                        <span class="c"># bugs Bash classiques</span>
+gitleaks detect                                <span class="c"># secrets</span></code></pre>
+</section>
+
+<section class="slide">
+  <h2><span class="num">5</span>CI/CD : expliquer un échec de pipeline</h2>
+  <p>C'est l'un des cas d'usage au meilleur retour sur investissement : on colle le log, l'IA propose des <strong>hypothèses classées</strong> avec la <strong>preuve</strong> à chercher.</p>
+  <pre><code>$ docker push registry.example.com//catalog-api:3f2a1c
+<span class="k">invalid reference format</span>
+ERROR: Job failed: exit code 1</code></pre>
+  <div class="prompt-box">Tu es ingénieur CI/CD. Voici le log d'un job GitLab CI en échec et l'extrait du .gitlab-ci.yml correspondant.
+Donne 3 hypothèses classées par probabilité. Pour chacune : la preuve dans le log qui la soutient, la vérification à faire, et le correctif.
+Ne propose PAS de désactiver une étape ni d'ajouter allow_failure.
+&lt;log&gt;...&lt;/log&gt;
+&lt;ci&gt;...&lt;/ci&gt;</div>
+  <p>➡️ Réponse attendue : le double <code>//</code> trahit une variable vide (<code>$CI_PROJECT_NAMESPACE</code> ou <code>$IMAGE_PREFIX</code> non définie dans ce contexte, ex. pipeline de MR depuis un fork, variable protégée non exposée).</p>
+  <div class="callout warn"><span class="t">⚠️ Piège</span>Sous pression, l'IA (comme l'humain) propose volontiers <code>allow_failure: true</code> ou un <code>.trivyignore</code> large. Un gate désactivé sans trace est une <strong>dette de sécurité invisible</strong> : toute exception doit être explicite, datée et justifiée.</div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">6</span>Sécurité : trier un rapport de scan</h2>
+  <p>Un scan Trivy peut sortir des centaines de lignes. Le gate filtre (HIGH/CRITICAL bloquant) ; l'IA aide à <strong>prioriser le reste</strong>.</p>
+  <div class="prompt-box">Voici le rapport Trivy (JSON) de l'image catalog-api. Contexte : API interne, exposée uniquement derrière l'ingress, Python 3.12.
+1. Regroupe les vulnérabilités par paquet.
+2. Sépare : corrigeable (fixed version dispo) / non corrigeable.
+3. Pour les corrigeables, donne la ligne à modifier (requirements.txt ou image de base).
+4. Signale celles qui touchent un composant réellement utilisé à l'exécution.
+Ne recommande aucune exception sans la marquer « À VALIDER PAR UN HUMAIN ».</div>
+  <div class="grid two">
+    <div class="card"><h4>🤖 Revue de PR assistée</h4><p>Commentaire automatique : résumé du changement, points de vigilance sécurité, tests manquants. <strong>Non bloquant</strong> ; les gates et l'approbation humaine restent décisionnaires.</p></div>
+    <div class="card"><h4>🧭 Threat modeling</h4><p>« Voici le schéma d'architecture. Applique STRIDE et liste les 10 menaces principales avec une mesure pour chacune. » Bon point de départ pour un atelier sécurité.</p></div>
+  </div>
+</section>
+
+<section class="slide">
+  <h2><span class="num">7</span>La pipeline augmentée</h2>
+  <p>L'IA s'installe <strong>autour</strong> de la pipeline, jamais comme maillon de décision.</p>
+  <div class="mermaid">
+flowchart TB
+  subgraph DET["Chaîne de décision déterministe"]
+    direction LR
+    T["Tests"] --> SA["Lint · SAST · Gitleaks"] --> B["Build"] --> SC["Trivy"] --> P["Publish"] --> G["PR GitOps"] --> H["🧑 Approbation"]
+  end
+  subgraph IA["Assistance IA (non bloquante)"]
+    direction LR
+    I1["Générer / expliquer le YAML"]
+    I2["Expliquer un job rouge"]
+    I3["Résumer le scan"]
+    I4["Commenter la PR"]
+  end
+  IA -.->|"propose, n'impose pas"| DET
+  style DET fill:#f0fdf4,stroke:#16a34a
+  style IA fill:#eff6ff,stroke:#2563eb
+  </div>
+  <h3>Exemple : un job de revue IA non bloquant (GitLab CI)</h3>
+  <pre><code>ai-review:
+  stage: review
+  image: python:3.12-slim
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  script:
+    - pip install -q -r tools/requirements.txt
+    - python tools/ai_review.py --diff "$CI_MERGE_REQUEST_DIFF_BASE_SHA" --post-comment
+  <span class="k">allow_failure: true</span>   <span class="c"># l'IA commente, elle ne bloque jamais</span>
+  timeout: 5m</code></pre>
+  <div class="callout tip"><span class="t">💡 Bonnes pratiques</span>Clé d'API dans une variable CI masquée et protégée ; ne pas envoyer le diff à un service externe si le dépôt est confidentiel ; journaliser coût et latence de chaque appel (cf. M7).</div>
+</section>
+
+
+<section class="slide">
+  <h2><span class="num">8</span>Qui relit quoi ? Dev humain, dev IA</h2>
+  <h3>Quand l'humain développe, l'IA relecte</h3>
+  <div class="mermaid">
+flowchart LR
+  D["🧑 Dev humain<br/>écrit le code"] --> H["🪝 Hook local<br/>/review, lint, tests"]
+  H --> PR["Pull Request"]
+  PR --> CI["✅ CI : tests · linter<br/>SAST · scan secrets"]
+  CI --> AR["🤖 Review agent<br/>lit le diff + rules"]
+  AR --> RH["🧑 Relecture humaine"]
+  RH --> DEP["🚀 Déploiement"]
+  </div>
+  <p>La rule de review porte la checklist de l'équipe (sécurité, conventions, tests présents, pas de secrets) ; le hook garantit ce que la rule ne peut que demander ; un skill peut décrire le « go/no-go » avant déploiement (migrations, variables, changelog).</p>
+  <h3>Quand l'IA développe : déplacer la confiance du jugement vers la preuve</h3>
+  <p>Si le même modèle écrit <em>et</em> relit, il a les mêmes angles morts : il trouve son propre code raisonnable. Les garde-fous ne reposent pas sur « l'IA qui vérifie l'IA » :</p>
+  <div class="grid two">
+    <div class="card"><h4>🔒 Contrôles indépendants</h4><ul><li>Tests, typage strict, linter, SAST, scan de dépendances, build en CI — déterministes, qu'un humain ou une IA ait écrit le code.</li><li>Critères d'acceptation (voire les tests) écrits ou relus par l'humain, l'IA code pour les faire passer.</li><li>Si review IA : un <strong>autre modèle</strong>, un <strong>contexte vierge</strong> (diff + rules seulement), un rôle <strong>adversarial</strong> (« trouve ce qui peut casser »).</li></ul></div>
+    <div class="card"><h4>🧱 Périmètre &amp; focus humain</h4><ul><li>Branches séparées, jamais <code>main</code> ; protection de branche : merge impossible sans CI verte ; pas d'accès prod ni secrets.</li><li><code>CODEOWNERS</code> : validation humaine obligatoire sur les zones sensibles (auth, paiement, données perso, migrations, infra).</li><li>Déploiement progressif (canary, feature flags), monitoring, rollback rapide : un bug passera parfois.</li></ul></div>
+  </div>
+  <div class="callout key"><span class="t">À retenir</span>On ne demande pas à l'IA « es-tu sûre ? » : on exige que le code passe des tests et des contrôles qu'elle ne peut pas contourner par sa propre opinion.</div>
+</section><section class="slide">
+  <h2><span class="num">9</span>Mesurer l'apport réel</h2>
+  <div class="grid">
+    <div class="card"><h4>📊 Métriques DORA</h4><p>Le délai de mise en production baisse‑t‑il ? Le taux d'échec des changements reste‑t‑il stable ?</p></div>
+    <div class="card"><h4>⏱️ Temps gagné</h4><p>Sur des tâches ciblées : rédaction de runbook, diagnostic de pipeline, migration.</p></div>
+    <div class="card"><h4>✅ Taux d'acceptation</h4><p>Part des suggestions conservées après revue, et nombre de corrections nécessaires.</p></div>
+    <div class="card"><h4>😊 Expérience développeur</h4><p>Enquêtes régulières : charge cognitive, satisfaction, sentiment de flow.</p></div>
+  </div>
+  <div class="callout warn"><span class="t">⚠️ À ne pas mesurer seul</span>Le nombre de lignes générées ou le nombre de prompts : ils encouragent les gros lots, donc l'instabilité.</div>
+</section>
+
+<section class="slide">
+  <h2>🧪 Ateliers 2 &amp; 3</h2>
+  <div class="grid two">
+    <a class="card" href="ateliers.html#atelier-2"><div class="ico">☸️</div><h4>Atelier 2 — Générer puis durcir un déploiement Kubernetes</h4><p>Générer, détecter les oublis avec une checklist, durcir, rédiger la note de revue. (25 min)</p></a>
+    <a class="card" href="ateliers.html#atelier-3"><div class="ico">🔧</div><h4>Atelier 3 — Refactorer un script legacy &amp; diagnostiquer une pipeline</h4><p>Script Bash fragile + log CI en échec. (20 min)</p></a>
+  </div>
+  <nav class="pager">
+    <a href="04-bases-du-prompting.html"><small>← Module précédent</small>M4 · Les bases du prompting</a>
+    <a class="next" href="06-monitoring-incidentologie.html"><small>Module suivant →</small>M6 · Monitoring et incidentologie</a>
+  </nav>
+</section>
+
+</main>
+<footer class="foot">Formation IA &amp; DevOps — Module 5</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
